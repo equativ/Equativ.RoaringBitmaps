@@ -52,37 +52,21 @@ internal static class PopcntAvx2
         Vector256<long> ones = Vector256<long>.Zero;
         Vector256<long> twos = Vector256<long>.Zero;
         Vector256<long> fours = Vector256<long>.Zero;
-        Vector256<long> eights = Vector256<long>.Zero;
-        Vector256<long> sixteens = Vector256<long>.Zero;
-        Vector256<long> twosA, twosB, foursA, foursB, eightsA, eightsB;
+        Vector256<long> twosA, twosB;
 
-        int limit = size - size % 16;
+        int limit = size - size % 4;
         int i = 0;
 
-        for (; i < limit; i += 16)
+        for (; i < limit; i += 4)
         {
             CSA(out twosA, out ones, ones, data[i + 0], data[i + 1]);
             CSA(out twosB, out ones, ones, data[i + 2], data[i + 3]);
-            CSA(out foursA, out twos, twos, twosA, twosB);
-            CSA(out twosA, out ones, ones, data[i + 4], data[i + 5]);
-            CSA(out twosB, out ones, ones, data[i + 6], data[i + 7]);
-            CSA(out foursB, out twos, twos, twosA, twosB);
-            CSA(out eightsA, out fours, fours, foursA, foursB);
-            CSA(out twosA, out ones, ones, data[i + 8], data[i + 9]);
-            CSA(out twosB, out ones, ones, data[i + 10], data[i + 11]);
-            CSA(out foursA, out twos, twos, twosA, twosB);
-            CSA(out twosA, out ones, ones, data[i + 12], data[i + 13]);
-            CSA(out twosB, out ones, ones, data[i + 14], data[i + 15]);
-            CSA(out foursB, out twos, twos, twosA, twosB);
-            CSA(out eightsB, out fours, fours, foursA, foursB);
-            CSA(out sixteens, out eights, eights, eightsA, eightsB);
+            CSA(out fours, out twos, twos, twosA, twosB);
 
-            total = Avx2.Add(total, Popcnt(sixteens.AsByte()));
+            total = Avx2.Add(total, Popcnt(fours.AsByte()));
         }
 
-        total = Avx2.ShiftLeftLogical(total, 4);
-        total = Avx2.Add(total, Avx2.ShiftLeftLogical(Popcnt(eights.AsByte()), 3));
-        total = Avx2.Add(total, Avx2.ShiftLeftLogical(Popcnt(fours.AsByte()), 2));
+        total = Avx2.ShiftLeftLogical(total, 2);
         total = Avx2.Add(total, Avx2.ShiftLeftLogical(Popcnt(twos.AsByte()), 1));
         total = Avx2.Add(total, Popcnt(ones.AsByte()));
 
