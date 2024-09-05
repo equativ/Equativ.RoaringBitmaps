@@ -1,0 +1,34 @@
+name: Publish NuGet Package
+
+on:
+  push:
+    tags: 
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.ref_name }}
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Restore
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore --configuration Release /p:Version=$VERSION
+
+    - name: Test
+      run: dotnet test --no-build --verbosity normal --configuration Release
+
+    - name: Pack
+      run: dotnet pack --output nupkgs --no-restore --no-build /p:PackageVersion=$VERSION
+
+    - name: Push
+      run: dotnet nuget push nupkgs/*.nupkg -k ${{ secrets.NUGET_TOKEN }} -s https://api.nuget.org/v3/index.json

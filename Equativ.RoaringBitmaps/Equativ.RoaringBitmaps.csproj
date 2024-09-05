@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageProjectUrl>https://github.com/equativ/Equativ.RoaringBitmaps</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/equativ/Equativ.RoaringBitmaps/blob/main/LICENSE</PackageLicenseUrl>
+    <PackageTags>Equativ.RoaringBitmaps</PackageTags>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <RepositoryUrl>https://github.com/equativ/Equativ.RoaringBitmaps</RepositoryUrl>
+    <Description>RoaringBitmap for .NET</Description>
+    <Authors>Equativ.RoaringBitmaps Contributors</Authors>
+    <Product>Equativ.RoaringBitmaps</Product>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <InternalsVisibleTo Include="Equativ.RoaringBitmaps.Tests" />
+    <InternalsVisibleTo Include="Equativ.RoaringBitmaps.Benchmarks" />
+  </ItemGroup>
+
+</Project>
