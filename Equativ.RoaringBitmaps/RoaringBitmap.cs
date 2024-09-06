@@ -26,6 +26,21 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     {
         return GetEnumerator();
     }
+    
+    /// <summary>
+    /// Convert the bitmap to an array of integers
+    /// </summary>
+    /// <returns>Array of integers</returns>
+    public int[] ToArray()
+    {
+        var array = new int[Cardinality];
+        var pos = 0;
+        foreach (var i in this)
+        {
+            array[pos++] = i;
+        }
+        return array;
+    }
 
     public bool Equals(RoaringBitmap other)
     {

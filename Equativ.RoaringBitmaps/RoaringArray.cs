@@ -11,32 +11,31 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
     private const int SerialCookieNoRuncontainer = 12346;
     private const int SerialCookie = 12347;
     private const int NoOffsetThreshold = 4;
-    private readonly ushort[] _mKeys;
-    private readonly int _mSize;
-    private readonly Container[] _mValues;
+    private readonly ushort[] _keys;
+    private readonly int _size;
+    private readonly Container[] _values;
 
-    // ReSharper disable once SuggestBaseTypeForParameter
     /// <summary>
     /// Use List directly, because the enumerator is a struct
     /// </summary>
     internal RoaringArray(int size, List<ushort> keys, List<Container> containers)
     {
-        _mSize = size;
-        _mKeys = new ushort[_mSize];
-        _mValues = new Container[_mSize];
-        for (var i = 0; i < _mSize; i++)
+        _size = size;
+        _keys = new ushort[_size];
+        _values = new Container[_size];
+        for (var i = 0; i < _size; i++)
         {
-            _mKeys[i] = keys[i];
-            _mValues[i] = containers[i];
-            Cardinality += _mValues[i].Cardinality;
+            _keys[i] = keys[i];
+            _values[i] = containers[i];
+            Cardinality += _values[i].Cardinality;
         }
     }
 
     private RoaringArray(int size, ushort[] keys, Container[] containers)
     {
-        _mSize = size;
-        _mKeys = keys;
-        _mValues = containers;
+        _size = size;
+        _keys = keys;
+        _values = containers;
         for (var i = 0; i < containers.Length; i++)
         {
             Cardinality += containers[i].Cardinality;
@@ -47,18 +46,18 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
 
     public IEnumerator<int> GetEnumerator()
     {
-        for (var i = 0; i < _mSize; i++)
+        for (var i = 0; i < _size; i++)
         {
-            var key = _mKeys[i];
+            var key = _keys[i];
             var shiftedKey = key << 16;
-            var container = _mValues[i];
+            var container = _values[i];
             foreach (var @ushort in container)
             {
                 yield return shiftedKey | @ushort;
             }
         }
     }
-
+    
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
@@ -74,13 +73,13 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         {
             return false;
         }
-        if (_mSize != other._mSize)
+        if (_size != other._size)
         {
             return false;
         }
-        for (var i = 0; i < _mSize; i++)
+        for (var i = 0; i < _size; i++)
         {
-            if ((_mKeys[i] != other._mKeys[i]) || !_mValues[i].Equals(other._mValues[i]))
+            if ((_keys[i] != other._keys[i]) || !_values[i].Equals(other._values[i]))
             {
                 return false;
             }
@@ -90,13 +89,13 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
 
     private int AdvanceUntil(ushort key, int index)
     {
-        return Utils.AdvanceUntil(_mKeys, index, _mKeys.Length, key);
+        return Utils.AdvanceUntil(_keys, index, _keys.Length, key);
     }
 
     public static RoaringArray operator |(RoaringArray x, RoaringArray y)
     {
-        var xLength = x._mSize;
-        var yLength = y._mSize;
+        var xLength = x._size;
+        var yLength = y._size;
         var keys = new List<ushort>(xLength + yLength);
         var containers = new List<Container>(xLength + yLength);
         var size = 0;
@@ -104,14 +103,14 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         var yPos = 0;
         if ((xPos < xLength) && (yPos < yLength))
         {
-            var xKey = x._mKeys[xPos];
-            var yKey = y._mKeys[yPos];
+            var xKey = x._keys[xPos];
+            var yKey = y._keys[yPos];
             while (true)
             {
                 if (xKey == yKey)
                 {
                     keys.Add(xKey);
-                    containers.Add(x._mValues[xPos] | y._mValues[yPos]);
+                    containers.Add(x._values[xPos] | y._values[yPos]);
                     size++;
                     xPos++;
                     yPos++;
@@ -119,32 +118,32 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                     {
                         break;
                     }
-                    xKey = x._mKeys[xPos];
-                    yKey = y._mKeys[yPos];
+                    xKey = x._keys[xPos];
+                    yKey = y._keys[yPos];
                 }
                 else if (xKey < yKey)
                 {
                     keys.Add(xKey);
-                    containers.Add(x._mValues[xPos]);
+                    containers.Add(x._values[xPos]);
                     size++;
                     xPos++;
                     if (xPos == xLength)
                     {
                         break;
                     }
-                    xKey = x._mKeys[xPos];
+                    xKey = x._keys[xPos];
                 }
                 else
                 {
                     keys.Add(yKey);
-                    containers.Add(y._mValues[yPos]);
+                    containers.Add(y._values[yPos]);
                     size++;
                     yPos++;
                     if (yPos == yLength)
                     {
                         break;
                     }
-                    yKey = y._mKeys[yPos];
+                    yKey = y._keys[yPos];
                 }
             }
         }
@@ -152,8 +151,8 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         {
             for (var i = yPos; i < yLength; i++)
             {
-                keys.Add(y._mKeys[i]);
-                containers.Add(y._mValues[i]);
+                keys.Add(y._keys[i]);
+                containers.Add(y._values[i]);
                 size++;
             }
         }
@@ -161,8 +160,8 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         {
             for (var i = xPos; i < xLength; i++)
             {
-                keys.Add(x._mKeys[i]);
-                containers.Add(x._mValues[i]);
+                keys.Add(x._keys[i]);
+                containers.Add(x._values[i]);
                 size++;
             }
         }
@@ -171,8 +170,8 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
 
     public static RoaringArray operator &(RoaringArray x, RoaringArray y)
     {
-        var xLength = x._mSize;
-        var yLength = y._mSize;
+        var xLength = x._size;
+        var yLength = y._size;
         List<ushort>? keys = null;
         List<Container>? containers = null;
         var size = 0;
@@ -180,11 +179,11 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         var yPos = 0;
         while ((xPos < xLength) && (yPos < yLength))
         {
-            var xKey = x._mKeys[xPos];
-            var yKey = y._mKeys[yPos];
+            var xKey = x._keys[xPos];
+            var yKey = y._keys[yPos];
             if (xKey == yKey)
             {
-                var c = x._mValues[xPos] & y._mValues[yPos];
+                var c = x._values[xPos] & y._values[yPos];
                 if (c.Cardinality > 0)
                 {
                     if (keys == null)
@@ -214,8 +213,8 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
 
     public static RoaringArray operator ^(RoaringArray x, RoaringArray y)
     {
-        var xLength = x._mSize;
-        var yLength = y._mSize;
+        var xLength = x._size;
+        var yLength = y._size;
         var keys = new List<ushort>(xLength + yLength);
         var containers = new List<Container>(xLength + yLength);
         var size = 0;
@@ -223,14 +222,14 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         var yPos = 0;
         if ((xPos < xLength) && (yPos < yLength))
         {
-            var xKey = x._mKeys[xPos];
-            var yKey = y._mKeys[yPos];
+            var xKey = x._keys[xPos];
+            var yKey = y._keys[yPos];
             while (true)
             {
                 if (xKey == yKey)
                 {
                     keys.Add(xKey);
-                    containers.Add(x._mValues[xPos] ^ y._mValues[yPos]);
+                    containers.Add(x._values[xPos] ^ y._values[yPos]);
                     size++;
                     xPos++;
                     yPos++;
@@ -238,32 +237,32 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                     {
                         break;
                     }
-                    xKey = x._mKeys[xPos];
-                    yKey = y._mKeys[yPos];
+                    xKey = x._keys[xPos];
+                    yKey = y._keys[yPos];
                 }
                 else if (xKey < yKey)
                 {
                     keys.Add(xKey);
-                    containers.Add(x._mValues[xPos]);
+                    containers.Add(x._values[xPos]);
                     size++;
                     xPos++;
                     if (xPos == xLength)
                     {
                         break;
                     }
-                    xKey = x._mKeys[xPos];
+                    xKey = x._keys[xPos];
                 }
                 else
                 {
                     keys.Add(yKey);
-                    containers.Add(y._mValues[yPos]);
+                    containers.Add(y._values[yPos]);
                     size++;
                     yPos++;
                     if (yPos == yLength)
                     {
                         break;
                     }
-                    yKey = y._mKeys[yPos];
+                    yKey = y._keys[yPos];
                 }
             }
         }
@@ -271,8 +270,8 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         {
             for (var i = yPos; i < yLength; i++)
             {
-                keys.Add(y._mKeys[i]);
-                containers.Add(y._mValues[i]);
+                keys.Add(y._keys[i]);
+                containers.Add(y._values[i]);
                 size++;
             }
         }
@@ -280,8 +279,8 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         {
             for (var i = xPos; i < xLength; i++)
             {
-                keys.Add(x._mKeys[i]);
-                containers.Add(x._mValues[i]);
+                keys.Add(x._keys[i]);
+                containers.Add(x._values[i]);
                 size++;
             }
         }
@@ -297,7 +296,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         for (var i = 0; i < Container.MaxCapacity; i++)
         {
             var ushortI = (ushort) i;
-            var index = Array.BinarySearch(x._mKeys, oldIndex, x._mSize - oldIndex, ushortI);
+            var index = Array.BinarySearch(x._keys, oldIndex, x._size - oldIndex, ushortI);
             if (index < 0)
             {
                 keys.Add(ushortI);
@@ -306,7 +305,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
             }
             else
             {
-                var c = x._mValues[index];
+                var c = x._values[index];
                 if (!c.Equals(BitmapContainer.One)) // the bitwise negation of the one container is the zero container
                 {
                     var nc = ~c;
@@ -325,8 +324,8 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
 
     public static RoaringArray AndNot(RoaringArray x, RoaringArray y)
     {
-        var xLength = x._mSize;
-        var yLength = y._mSize;
+        var xLength = x._size;
+        var yLength = y._size;
         var keys = new List<ushort>(xLength);
         var containers = new List<Container>(xLength);
         var size = 0;
@@ -334,11 +333,11 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         var yPos = 0;
         while ((xPos < xLength) && (yPos < yLength))
         {
-            var xKey = x._mKeys[xPos];
-            var yKey = y._mKeys[yPos];
+            var xKey = x._keys[xPos];
+            var yKey = y._keys[yPos];
             if (xKey == yKey)
             {
-                var c = Container.AndNot(x._mValues[xPos], y._mValues[yPos]);
+                var c = Container.AndNot(x._values[xPos], y._values[yPos]);
                 if (c.Cardinality > 0)
                 {
                     keys.Add(xKey);
@@ -353,8 +352,8 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                 var next = x.AdvanceUntil(yKey, xPos);
                 for (var i = xPos; i < next; i++)
                 {
-                    keys.Add(x._mKeys[i]);
-                    containers.Add(x._mValues[i]);
+                    keys.Add(x._keys[i]);
+                    containers.Add(x._values[i]);
                     size++;
                 }
                 xPos = next;
@@ -368,8 +367,8 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         {
             for (var i = xPos; i < xLength; i++)
             {
-                keys.Add(x._mKeys[i]);
-                containers.Add(x._mValues[i]);
+                keys.Add(x._keys[i]);
+                containers.Add(x._values[i]);
                 size++;
             }
         }
@@ -387,11 +386,11 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         unchecked
         {
             var code = 17;
-            code = code * 23 + _mSize;
-            for (var i = 0; i < _mSize; i++)
+            code = code * 23 + _size;
+            for (var i = 0; i < _size; i++)
             {
-                code = code * 23 + _mKeys[i].GetHashCode();
-                code = code * 23 + _mValues[i].GetHashCode();
+                code = code * 23 + _keys[i].GetHashCode();
+                code = code * 23 + _values[i].GetHashCode();
             }
             return code;
         }
@@ -402,9 +401,9 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         var hasRun = HasRunContainer(roaringArray);
         using (var binaryWriter = new BinaryWriter(stream, Encoding.UTF8, true))
         {
-            var size = roaringArray._mSize;
-            var keys = roaringArray._mKeys;
-            var values = roaringArray._mValues;
+            var size = roaringArray._size;
+            var keys = roaringArray._keys;
+            var values = roaringArray._values;
             var startOffset = 0;
             if (hasRun)
             {
@@ -476,9 +475,9 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
 
     private static bool HasRunContainer(RoaringArray roaringArray)
     {
-        for (var i = 0; i < roaringArray._mSize; i++)
+        for (var i = 0; i < roaringArray._size; i++)
         {
-            if (roaringArray._mValues[i].Equals(ArrayContainer.One) || roaringArray._mValues[i].Equals(BitmapContainer.One))
+            if (roaringArray._values[i].Equals(ArrayContainer.One) || roaringArray._values[i].Equals(BitmapContainer.One))
             {
                 return true;
             }
@@ -592,12 +591,12 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
 
     public static RoaringArray Optimize(RoaringArray roaringArray)
     {
-        var keys = new ushort[roaringArray._mSize];
-        Array.Copy(roaringArray._mKeys, keys, roaringArray._mSize);
-        var containers = new Container[roaringArray._mSize];
-        for (var i = 0; i < roaringArray._mSize; i++)
+        var keys = new ushort[roaringArray._size];
+        Array.Copy(roaringArray._keys, keys, roaringArray._size);
+        var containers = new Container[roaringArray._size];
+        for (var i = 0; i < roaringArray._size; i++)
         {
-            var currentContainer = roaringArray._mValues[i];
+            var currentContainer = roaringArray._values[i];
             if (currentContainer.Equals(ArrayContainer.One))
             {
                 containers[i] = ArrayContainer.One;
@@ -611,6 +610,6 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                 containers[i] = currentContainer;
             }
         }
-        return new RoaringArray(roaringArray._mSize, keys, containers);
+        return new RoaringArray(roaringArray._size, keys, containers);
     }
 }

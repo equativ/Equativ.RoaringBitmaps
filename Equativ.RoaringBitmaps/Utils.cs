@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.Arm;
+using System.Runtime.Intrinsics.X86;
 
 namespace Equativ.RoaringBitmaps;
 
-/// <summary>
-/// Pretty much everything in here are straight conversions from the original Util class in the java Roaring Bitmap project.
-/// </summary>
-public static class Utils
+internal static class Utils
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int Popcnt(ulong[] longs)
@@ -16,11 +14,10 @@ public static class Utils
         {
             return (int)PopcntNeon.Popcnt(longs.AsSpan());
         }
-        // AVX2 Support needs proper testing before being enabled
-        // if (Avx2.IsSupported)
-        // {
-        //     return (int)PopcntAvx2.Popcnt(longs.AsSpan());
-        // }
+        if (Avx2.IsSupported)
+        {
+            return (int)PopcntAvx2.Popcnt(longs.AsSpan());
+        }
         // AVX512 Support needs proper testing before being enabled
         // if (Avx512BW.IsSupported)
         // {
