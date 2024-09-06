@@ -49,28 +49,36 @@ internal static class PopcntAvx2
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ulong Popcnt(ref Vector256<long> start, int size)
     {
+        if (size == 0)
+        {
+            return 0;
+        }
+        
         Vector256<long> total = Vector256<long>.Zero;
         Vector256<long> ones = Vector256<long>.Zero;
         Vector256<long> twos = Vector256<long>.Zero;
 
         int limit = size - size % 4;
-        
-        ref var end = ref Unsafe.Add(ref start, limit);
 
-        while (Unsafe.IsAddressLessThan(ref start, ref end))
+        if (limit >= 4)
         {
-            CSA(out var twosA, out ones, ref ones, ref start, ref Unsafe.Add(ref start, 1));
-            CSA(out var twosB, out ones, ref ones, ref Unsafe.Add(ref start, 2), ref Unsafe.Add(ref start, 3));
-            CSA(out var fours, out twos, ref twos, ref twosA, ref twosB);
+            ref var end = ref Unsafe.Add(ref start, limit);
 
-            total = Avx2.Add(total, PopcntVec(ref fours));
+            while (Unsafe.IsAddressLessThan(ref start, ref end))
+            {
+                CSA(out var twosA, out ones, ref ones, ref start, ref Unsafe.Add(ref start, 1));
+                CSA(out var twosB, out ones, ref ones, ref Unsafe.Add(ref start, 2), ref Unsafe.Add(ref start, 3));
+                CSA(out var fours, out twos, ref twos, ref twosA, ref twosB);
+
+                total = Avx2.Add(total, PopcntVec(ref fours));
             
-            start = ref Unsafe.Add(ref start, 4);
-        }
+                start = ref Unsafe.Add(ref start, 4);
+            }
 
-        total = Avx2.ShiftLeftLogical(total, 2);
-        total = Avx2.Add(total, Avx2.ShiftLeftLogical(PopcntVec(ref twos), 1));
-        total = Avx2.Add(total, PopcntVec(ref ones));
+            total = Avx2.ShiftLeftLogical(total, 2);
+            total = Avx2.Add(total, Avx2.ShiftLeftLogical(PopcntVec(ref twos), 1));
+            total = Avx2.Add(total, PopcntVec(ref ones));
+        }
         
         ref var end2 = ref Unsafe.Add(ref start, size % 4);
 

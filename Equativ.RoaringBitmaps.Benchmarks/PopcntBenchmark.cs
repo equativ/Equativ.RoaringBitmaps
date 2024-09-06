@@ -4,29 +4,26 @@ namespace Equativ.RoaringBitmaps.Benchmark;
 
 public class PopcntBenchmark
 {
-    [Params(
-        new ulong[] { 1 }, 
-        new ulong[] { 1453523523442, 9218234235626264, 1293481512390459239, 2384583424912, 28923795749884, 9234848923478387, 9919238781987590878 },
-        new ulong[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 },
-        new ulong[]
-        {
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
-        })
-    ]
-    public ulong[] Values { get; set; }
+    [ParamsSource(nameof(GetInputs))]
+    public ulong[] Input { get; set; }
+
+    public static IEnumerable<ulong[]> GetInputs()
+    {
+        yield return Enumerable.Range(0, 4).Select(x => (ulong)Random.Shared.NextInt64()).ToArray();
+        yield return Enumerable.Range(0, 32).Select(x => (ulong)Random.Shared.NextInt64()).ToArray();
+        yield return Enumerable.Range(0, 128).Select(x => (ulong)Random.Shared.NextInt64()).ToArray();
+        yield return Enumerable.Range(0, 1024).Select(x => (ulong)Random.Shared.NextInt64()).ToArray();
+    }
     
     [Benchmark]
     public int PopCount64()
     {
-        return Popcnt64.Popcnt(Values);
+        return Popcnt64.Popcnt(Input);
     }
 
     [Benchmark]
     public int PopCountSimd()
     {
-        return Utils.Popcnt(Values);
+        return Utils.Popcnt(Input);
     }
 }
