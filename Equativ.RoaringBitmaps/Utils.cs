@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
 
@@ -19,14 +17,15 @@ public static class Utils
         {
             return (int)PopcntNeon.Popcnt(longs.AsSpan());
         }
-        if (Avx512BW.IsSupported)
-        {
-            return (int)PopcntAvx512.Popcnt(MemoryMarshal.Cast<ulong, byte>(longs));
-        }
         if (Avx2.IsSupported)
         {
             return (int)PopcntAvx2.Popcnt(longs.AsSpan());
         }
+        // AVX512 Support needs proper testing before being enabled
+        // if (Avx512BW.IsSupported)
+        // {
+        //     return (int)PopcntAvx512.Popcnt(longs.AsSpan());
+        // }
         
         return Popcnt64.Popcnt(longs);
     }

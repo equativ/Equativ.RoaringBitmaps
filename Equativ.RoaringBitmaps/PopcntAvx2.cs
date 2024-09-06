@@ -16,7 +16,7 @@ internal static class PopcntAvx2
         ref Vector256<long> start = ref Unsafe.As<ulong, Vector256<long>>(ref MemoryMarshal.GetReference(longs));
         ulong total = Popcnt(ref start, longs.Length / 4);
 
-        // Handle remaining bytes
+        // Handle remaining longs
         for (int i = longs.Length - longs.Length % 4; i < longs.Length; i++)
         {
             total += (ulong)BitOperations.PopCount(longs[i]);
