@@ -20,7 +20,7 @@ internal static class PopcntNeon
         ulong cnt = 0;
         
         int numberOfVectors = data.Length / VECTOR_SIZE;
-        int numberOfUnrolledIterations = (numberOfVectors / UNROLL_FACTOR) * UNROLL_FACTOR;
+        int numberOfUnrolledIterations = numberOfVectors / UNROLL_FACTOR * UNROLL_FACTOR;
         ref var end = ref Unsafe.Add(ref start, numberOfUnrolledIterations);
 
         while (Unsafe.IsAddressLessThan(ref start, ref end))

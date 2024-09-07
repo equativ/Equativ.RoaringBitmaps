@@ -6,7 +6,7 @@ namespace Equativ.RoaringBitmaps.Benchmark;
 [MemoryDiagnoser(false)]
 public class DatasetsBenchmark
 {
-    private RoaringBitmap[] _mBitmaps;
+    private RoaringBitmap[] _bitmaps;
     
     [Params(
         Paths.Census1881,
@@ -28,7 +28,7 @@ public class DatasetsBenchmark
     {
         using (var provider = new ZipRealDataProvider(FileName))
         {
-            _mBitmaps = provider.ToArray();
+            _bitmaps = provider.ToArray();
         }
     }
 
@@ -36,9 +36,9 @@ public class DatasetsBenchmark
     public long Or()
     {
         var total = 0L;
-        for (var k = 0; k < _mBitmaps.Length - 1; k++)
+        for (var k = 0; k < _bitmaps.Length - 1; k++)
         {
-            total += (_mBitmaps[k] | _mBitmaps[k + 1]).Cardinality;
+            total += (_bitmaps[k] | _bitmaps[k + 1]).Cardinality;
         }
         return total;
     }
@@ -47,9 +47,9 @@ public class DatasetsBenchmark
     public long Xor()
     {
         var total = 0L;
-        for (var k = 0; k < _mBitmaps.Length - 1; k++)
+        for (var k = 0; k < _bitmaps.Length - 1; k++)
         {
-            total += (_mBitmaps[k] ^ _mBitmaps[k + 1]).Cardinality;
+            total += (_bitmaps[k] ^ _bitmaps[k + 1]).Cardinality;
         }
         return total;
     }
@@ -58,9 +58,9 @@ public class DatasetsBenchmark
     public long And()
     {
         var total = 0L;
-        for (var k = 0; k < _mBitmaps.Length - 1; k++)
+        for (var k = 0; k < _bitmaps.Length - 1; k++)
         {
-            total += (_mBitmaps[k] & _mBitmaps[k + 1]).Cardinality;
+            total += (_bitmaps[k] & _bitmaps[k + 1]).Cardinality;
         }
         return total;
     }
@@ -69,9 +69,9 @@ public class DatasetsBenchmark
     public long AndNot()
     {
         var total = 0L;
-        for (var k = 0; k < _mBitmaps.Length - 1; k++)
+        for (var k = 0; k < _bitmaps.Length - 1; k++)
         {
-            total += RoaringBitmap.AndNot(_mBitmaps[k], _mBitmaps[k + 1]).Cardinality;
+            total += RoaringBitmap.AndNot(_bitmaps[k], _bitmaps[k + 1]).Cardinality;
         }
         return total;
     }
@@ -80,7 +80,7 @@ public class DatasetsBenchmark
     public long Iterate()
     {
         var total = 0L;
-        foreach (var roaringBitmap in _mBitmaps)
+        foreach (var roaringBitmap in _bitmaps)
         {
             foreach (var @int in roaringBitmap)
             {

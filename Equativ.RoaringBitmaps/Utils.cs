@@ -153,22 +153,22 @@ internal static class Utils
         return pos;
     }
 
-    public static int IntersectArrays(ushort[] set1, int length1, ushort[] set2, int length2, ushort[] buffer)
+    public static int IntersectArrays(ReadOnlySpan<ushort> set1, ReadOnlySpan<ushort> set2, ushort[] buffer)
     {
         if (set1.Length << 6 < set2.Length)
         {
-            return OneSidedGallopingIntersect2By2(set1, length1, set2, length2, buffer);
+            return OneSidedGallopingIntersect2By2(set1, set2, buffer);
         }
         if (set2.Length << 6 < set1.Length)
         {
-            return OneSidedGallopingIntersect2By2(set2, length2, set1, length1, buffer);
+            return OneSidedGallopingIntersect2By2(set2, set1, buffer);
         }
-        return LocalIntersect2By2(set1, length1, set2, length2, buffer);
+        return LocalIntersect2By2(set1, set2, buffer);
     }
 
-    private static int LocalIntersect2By2(ushort[] set1, int length1, ushort[] set2, int length2, ushort[] buffer)
+    private static int LocalIntersect2By2(ReadOnlySpan<ushort> set1, ReadOnlySpan<ushort> set2, ushort[] buffer)
     {
-        if ((0 == length1) || (0 == length2))
+        if (0 == set1.Length || 0 == set2.Length)
         {
             return 0;
         }
@@ -187,7 +187,7 @@ internal static class Utils
                 do
                 {
                     ++k2;
-                    if (k2 == length2)
+                    if (k2 == set2.Length)
                     {
                         return pos;
                     }
@@ -200,7 +200,7 @@ internal static class Utils
                 do
                 {
                     ++k1;
-                    if (k1 == length1)
+                    if (k1 == set1.Length)
                     {
                         return pos;
                     }
@@ -212,12 +212,12 @@ internal static class Utils
             {
                 buffer[pos++] = s1;
                 ++k1;
-                if (k1 == length1)
+                if (k1 == set1.Length)
                 {
                     break;
                 }
                 ++k2;
-                if (k2 == length2)
+                if (k2 == set2.Length)
                 {
                     break;
                 }
@@ -228,9 +228,9 @@ internal static class Utils
         return pos;
     }
 
-    private static int OneSidedGallopingIntersect2By2(ushort[] smallSet, int smallLength, ushort[] largeSet, int largeLength, ushort[] buffer)
+    private static int OneSidedGallopingIntersect2By2(ReadOnlySpan<ushort> smallSet, ReadOnlySpan<ushort> largeSet, ushort[] buffer)
     {
-        if (0 == smallLength)
+        if (0 == smallSet.Length)
         {
             return 0;
         }
@@ -243,8 +243,8 @@ internal static class Utils
         {
             if (s1 < s2)
             {
-                k1 = AdvanceUntil(largeSet, k1, largeLength, s2);
-                if (k1 == largeLength)
+                k1 = AdvanceUntil(largeSet, k1, s2);
+                if (k1 == largeSet.Length)
                 {
                     break;
                 }
@@ -253,7 +253,7 @@ internal static class Utils
             if (s2 < s1)
             {
                 ++k2;
-                if (k2 == smallLength)
+                if (k2 == smallSet.Length)
                 {
                     break;
                 }
@@ -263,13 +263,13 @@ internal static class Utils
             {
                 buffer[pos++] = s2;
                 ++k2;
-                if (k2 == smallLength)
+                if (k2 == smallSet.Length)
                 {
                     break;
                 }
                 s2 = smallSet[k2];
-                k1 = AdvanceUntil(largeSet, k1, largeLength, s2);
-                if (k1 == largeLength)
+                k1 = AdvanceUntil(largeSet, k1, s2);
+                if (k1 == largeSet.Length)
                 {
                     break;
                 }
@@ -283,14 +283,14 @@ internal static class Utils
     /// Find the smallest integer larger than pos such that array[pos]&gt;= min. otherwise return length
     /// -> The first line is BinarySearch with pos + 1, the second line is the bitwise complement if the value can't be found
     /// </summary>
-    public static int AdvanceUntil(ushort[] array, int pos, int length, ushort min)
+    public static int AdvanceUntil(ReadOnlySpan<ushort> span, int pos, ushort min)
     {
         var start = pos + 1; // check the next one
-        if ((start >= length) || (array[start] >= min)) // the simple cases
+        if (start >= span.Length || span[start] >= min) // the simple cases
         {
             return start;
         }
-        var result = Array.BinarySearch(array, start, length - start, min);
+        var result = MemoryExtensions.BinarySearch(span.Slice(start), min);
         return result < 0 ? ~result : result;
     }
 

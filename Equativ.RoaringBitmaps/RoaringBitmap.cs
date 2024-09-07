@@ -8,18 +8,18 @@ namespace Equativ.RoaringBitmaps;
 
 public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
 {
-    private readonly RoaringArray _mHighLowContainer;
+    private readonly RoaringArray _highLowContainer;
 
     private RoaringBitmap(RoaringArray input)
     {
-        _mHighLowContainer = input;
+        _highLowContainer = input;
     }
 
-    public long Cardinality => _mHighLowContainer.Cardinality;
+    public long Cardinality => _highLowContainer.Cardinality;
 
     public IEnumerator<int> GetEnumerator()
     {
-        return _mHighLowContainer.GetEnumerator();
+        return _highLowContainer.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -42,7 +42,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
         return array;
     }
 
-    public bool Equals(RoaringBitmap other)
+    public bool Equals(RoaringBitmap? other)
     {
         if (ReferenceEquals(this, other))
         {
@@ -52,7 +52,18 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
         {
             return false;
         }
-        return _mHighLowContainer.Equals(other._mHighLowContainer);
+        return _highLowContainer.Equals(other._highLowContainer);
+    }
+    
+    public override bool Equals(object? obj)
+    {
+        var ra = obj as RoaringArray;
+        return ra != null && Equals(ra);
+    }
+
+    public override int GetHashCode()
+    {
+        return (13 ^ _highLowContainer.GetHashCode()) << 3;
     }
 
     /// <summary>
@@ -71,7 +82,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     /// <returns>RoaringBitmap</returns>
     public RoaringBitmap Optimize()
     {
-        return new RoaringBitmap(RoaringArray.Optimize(_mHighLowContainer));
+        return new RoaringBitmap(RoaringArray.Optimize(_highLowContainer));
     }
 
     /// <summary>
@@ -81,6 +92,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     /// <returns>RoaringBitmap</returns>
     public static RoaringBitmap Create(IEnumerable<int> values)
     {
+        // Todo: Optimize this (avoid Linq)
         var groupbyHb = values.Distinct().OrderBy(t => t).GroupBy(Utils.HighBits).OrderBy(t => t.Key).ToList();
         var keys = new List<ushort>();
         var containers = new List<Container>();
@@ -109,7 +121,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     /// <returns>RoaringBitmap</returns>
     public static RoaringBitmap operator |(RoaringBitmap x, RoaringBitmap y)
     {
-        return new RoaringBitmap(x._mHighLowContainer | y._mHighLowContainer);
+        return new RoaringBitmap(x._highLowContainer | y._highLowContainer);
     }
 
     /// <summary>
@@ -120,7 +132,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     /// <returns>RoaringBitmap</returns>
     public static RoaringBitmap operator &(RoaringBitmap x, RoaringBitmap y)
     {
-        return new RoaringBitmap(x._mHighLowContainer & y._mHighLowContainer);
+        return new RoaringBitmap(x._highLowContainer & y._highLowContainer);
     }
 
     /// <summary>
@@ -130,7 +142,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     /// <returns>RoaringBitmap</returns>
     public static RoaringBitmap operator ~(RoaringBitmap x)
     {
-        return new RoaringBitmap(~x._mHighLowContainer);
+        return new RoaringBitmap(~x._highLowContainer);
     }
 
     /// <summary>
@@ -141,7 +153,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     /// <returns>RoaringBitmap</returns>
     public static RoaringBitmap operator ^(RoaringBitmap x, RoaringBitmap y)
     {
-        return new RoaringBitmap(x._mHighLowContainer ^ y._mHighLowContainer);
+        return new RoaringBitmap(x._highLowContainer ^ y._highLowContainer);
     }
 
     /// <summary>
@@ -152,18 +164,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     /// <returns>RoaringBitmap</returns>
     public static RoaringBitmap AndNot(RoaringBitmap x, RoaringBitmap y)
     {
-        return new RoaringBitmap(RoaringArray.AndNot(x._mHighLowContainer, y._mHighLowContainer));
-    }
-
-    public override bool Equals(object obj)
-    {
-        var ra = obj as RoaringArray;
-        return (ra != null) && Equals(ra);
-    }
-
-    public override int GetHashCode()
-    {
-        return (13 ^ _mHighLowContainer.GetHashCode()) << 3;
+        return new RoaringBitmap(RoaringArray.AndNot(x._highLowContainer, y._highLowContainer));
     }
 
     /// <summary>
@@ -173,7 +174,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     /// <param name="stream">Stream</param>
     public static void Serialize(RoaringBitmap roaringBitmap, Stream stream)
     {
-        RoaringArray.Serialize(roaringBitmap._mHighLowContainer, stream);
+        RoaringArray.Serialize(roaringBitmap._highLowContainer, stream);
     }
 
     /// <summary>

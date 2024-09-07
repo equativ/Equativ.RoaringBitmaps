@@ -63,7 +63,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
 
     public override int ArraySizeInBytes => MaxCapacity / 8;
 
-    public bool Equals(BitmapContainer other)
+    public bool Equals(BitmapContainer? other)
     {
         if (ReferenceEquals(this, other))
         {
@@ -102,8 +102,6 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     {
         return new BitmapContainer(cardinality, values, negated);
     }
-
-
     internal static BitmapContainer CreateXor(ushort[] first, int firstCardinality, ushort[] second, int secondCardinality)
     {
         var data = new ulong[BitmapLength];
@@ -123,14 +121,13 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     }
 
     /// <summary>
-    ///     Java version has an optimized version of this, but it's using bitcount internally which should make it slower in
-    ///     .NET
+    /// Java version has an optimized version of this, but it's using bitcount internally which should make it slower in .NET
     /// </summary>
     public static Container operator &(BitmapContainer x, BitmapContainer y)
     {
         var data = Clone(x._bitmap);
         var bc = new BitmapContainer(AndInternal(data, y._bitmap), data);
-        return bc._cardinality <= MaxSize ? (Container) ArrayContainer.Create(bc) : bc;
+        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
     }
 
     private static ulong[] Clone(ulong[] data)
@@ -161,7 +158,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     {
         var data = Clone(x._bitmap);
         var bc = new BitmapContainer(NotInternal(data), data);
-        return bc._cardinality <= MaxSize ? (Container) ArrayContainer.Create(bc) : bc;
+        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
     }
 
     /// <summary>
@@ -172,7 +169,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     {
         var data = Clone(x._bitmap);
         var bc = new BitmapContainer(XorInternal(data, y._bitmap), data);
-        return bc._cardinality <= MaxSize ? (Container) ArrayContainer.Create(bc) : bc;
+        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
     }
 
 
@@ -180,21 +177,21 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     {
         var data = Clone(x._bitmap);
         var bc = new BitmapContainer(x._cardinality + y.XorArray(data), data);
-        return bc._cardinality <= MaxSize ? (Container) ArrayContainer.Create(bc) : bc;
+        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
     }
 
     public static Container AndNot(BitmapContainer x, BitmapContainer y)
     {
         var data = Clone(x._bitmap);
         var bc = new BitmapContainer(AndNotInternal(data, y._bitmap), data);
-        return bc._cardinality <= MaxSize ? (Container) ArrayContainer.Create(bc) : bc;
+        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
     }
 
     public static Container AndNot(BitmapContainer x, ArrayContainer y)
     {
         var data = Clone(x._bitmap);
         var bc = new BitmapContainer(x._cardinality + y.AndNotArray(data), data);
-        return bc._cardinality <= MaxSize ? (Container) ArrayContainer.Create(bc) : bc;
+        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
     }
 
     private static int XorInternal(ulong[] first, ulong[] second)
@@ -262,7 +259,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     protected override bool EqualsInternal(Container other)
     {
         var bc = other as BitmapContainer;
-        return (bc != null) && Equals(bc);
+        return bc != null && Equals(bc);
     }
 
     public override IEnumerator<ushort> GetEnumerator()
@@ -298,10 +295,10 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
         return _cardinality;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         var bc = obj as BitmapContainer;
-        return (bc != null) && Equals(bc);
+        return bc != null && Equals(bc);
     }
 
     public override int GetHashCode()

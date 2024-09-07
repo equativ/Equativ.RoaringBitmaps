@@ -70,7 +70,7 @@ internal class ArrayContainer : Container, IEquatable<ArrayContainer>
     protected override bool EqualsInternal(Container other)
     {
         var ac = other as ArrayContainer;
-        return (ac != null) && Equals(ac);
+        return ac != null && Equals(ac);
     }
 
     public override IEnumerator<ushort> GetEnumerator()
@@ -85,7 +85,7 @@ internal class ArrayContainer : Container, IEquatable<ArrayContainer>
     {
         var desiredCapacity = Math.Min(x._cardinality, y._cardinality);
         var data = new ushort[desiredCapacity];
-        var calculatedCardinality = Utils.IntersectArrays(x._content, x._cardinality, y._content, y._cardinality, data);
+        var calculatedCardinality = Utils.IntersectArrays(x._content.AsSpan(0, x._cardinality), y._content.AsSpan(0, y._cardinality), data);
         return new ArrayContainer(calculatedCardinality, data);
     }
 
@@ -232,7 +232,7 @@ internal class ArrayContainer : Container, IEquatable<ArrayContainer>
     public override bool Equals(object? obj)
     {
         var ac = obj as ArrayContainer;
-        return (ac != null) && Equals(ac);
+        return ac != null && Equals(ac);
     }
 
     public override int GetHashCode()

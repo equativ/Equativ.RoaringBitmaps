@@ -79,17 +79,38 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         }
         for (var i = 0; i < _size; i++)
         {
-            if ((_keys[i] != other._keys[i]) || !_values[i].Equals(other._values[i]))
+            if (_keys[i] != other._keys[i] || !_values[i].Equals(other._values[i]))
             {
                 return false;
             }
         }
         return true;
     }
+    
+    public override bool Equals(object? obj)
+    {
+        var ra = obj as RoaringArray;
+        return ra != null && Equals(ra);
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            var code = 17;
+            code = code * 23 + _size;
+            for (var i = 0; i < _size; i++)
+            {
+                code = code * 23 + _keys[i].GetHashCode();
+                code = code * 23 + _values[i].GetHashCode();
+            }
+            return code;
+        }
+    }
 
     private int AdvanceUntil(ushort key, int index)
     {
-        return Utils.AdvanceUntil(_keys, index, _keys.Length, key);
+        return Utils.AdvanceUntil(_keys, index, key);
     }
 
     public static RoaringArray operator |(RoaringArray x, RoaringArray y)
@@ -101,7 +122,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         var size = 0;
         var xPos = 0;
         var yPos = 0;
-        if ((xPos < xLength) && (yPos < yLength))
+        if (xPos < xLength && yPos < yLength)
         {
             var xKey = x._keys[xPos];
             var yKey = y._keys[yPos];
@@ -114,7 +135,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                     size++;
                     xPos++;
                     yPos++;
-                    if ((xPos == xLength) || (yPos == yLength))
+                    if (xPos == xLength || yPos == yLength)
                     {
                         break;
                     }
@@ -177,7 +198,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         var size = 0;
         var xPos = 0;
         var yPos = 0;
-        while ((xPos < xLength) && (yPos < yLength))
+        while (xPos < xLength && yPos < yLength)
         {
             var xKey = x._keys[xPos];
             var yKey = y._keys[yPos];
@@ -193,7 +214,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                         containers = new List<Container>(length);
                     }
                     keys.Add(xKey);
-                    containers.Add(c);
+                    containers!.Add(c);
                     size++;
                 }
                 xPos++;
@@ -208,7 +229,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                 yPos = y.AdvanceUntil(xKey, yPos);
             }
         }
-        return new RoaringArray(size, keys, containers);
+        return new RoaringArray(size, keys!, containers!);
     }
 
     public static RoaringArray operator ^(RoaringArray x, RoaringArray y)
@@ -220,7 +241,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         var size = 0;
         var xPos = 0;
         var yPos = 0;
-        if ((xPos < xLength) && (yPos < yLength))
+        if (xPos < xLength && yPos < yLength)
         {
             var xKey = x._keys[xPos];
             var yKey = y._keys[yPos];
@@ -233,7 +254,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                     size++;
                     xPos++;
                     yPos++;
-                    if ((xPos == xLength) || (yPos == yLength))
+                    if (xPos == xLength || yPos == yLength)
                     {
                         break;
                     }
@@ -331,7 +352,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         var size = 0;
         var xPos = 0;
         var yPos = 0;
-        while ((xPos < xLength) && (yPos < yLength))
+        while (xPos < xLength && yPos < yLength)
         {
             var xKey = x._keys[xPos];
             var yKey = y._keys[yPos];
@@ -375,27 +396,6 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         return new RoaringArray(size, keys, containers);
     }
 
-    public override bool Equals(object? obj)
-    {
-        var ra = obj as RoaringArray;
-        return (ra != null) && Equals(ra);
-    }
-
-    public override int GetHashCode()
-    {
-        unchecked
-        {
-            var code = 17;
-            code = code * 23 + _size;
-            for (var i = 0; i < _size; i++)
-            {
-                code = code * 23 + _keys[i].GetHashCode();
-                code = code * 23 + _values[i].GetHashCode();
-            }
-            return code;
-        }
-    }
-
     public static void Serialize(RoaringArray roaringArray, Stream stream)
     {
         var hasRun = HasRunContainer(roaringArray);
@@ -429,7 +429,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                 binaryWriter.Write(keys[k]);
                 binaryWriter.Write((ushort) (values[k].Cardinality - 1));
             }
-            if (!hasRun || (size >= NoOffsetThreshold))
+            if (!hasRun || size >= NoOffsetThreshold)
             {
                 for (var k = 0; k < size; k++)
                 {
@@ -491,7 +491,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         {
             var cookie = binaryReader.ReadUInt32();
             var lbcookie = cookie & 0xFFFF;
-            if ((lbcookie != SerialCookie) && (cookie != SerialCookieNoRuncontainer))
+            if (lbcookie != SerialCookie && cookie != SerialCookieNoRuncontainer)
             {
                 throw new InvalidDataException("No RoaringBitmap file.");
             }
@@ -512,12 +512,12 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                 keys[k] = binaryReader.ReadUInt16();
                 cardinalities[k] = 1 + (0xFFFF & binaryReader.ReadUInt16());
                 isBitmap[k] = cardinalities[k] > Container.MaxSize;
-                if ((bitmapOfRunContainers != null) && ((bitmapOfRunContainers[k / 8] & (1 << (k % 8))) != 0))
+                if (bitmapOfRunContainers != null && (bitmapOfRunContainers[k / 8] & (1 << (k % 8))) != 0)
                 {
                     isBitmap[k] = false;
                 }
             }
-            if (!hasRun || (size >= NoOffsetThreshold))
+            if (!hasRun || size >= NoOffsetThreshold)
             {
                 // skipping the offsets
                 binaryReader.ReadBytes(size * 4);
@@ -528,7 +528,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                 {
                     containers[k] = BitmapContainer.Deserialize(binaryReader, cardinalities[k]);
                 }
-                else if ((bitmapOfRunContainers != null) && ((bitmapOfRunContainers[k / 8] & (1 << (k % 8))) != 0))
+                else if (bitmapOfRunContainers != null && (bitmapOfRunContainers[k / 8] & (1 << (k % 8))) != 0)
                 {
                     var nbrruns = binaryReader.ReadUInt16();
                     var values = new List<ushort>(nbrruns * 2); // probably more
@@ -539,13 +539,13 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
                         var value = binaryReader.ReadUInt16();
                         var length = binaryReader.ReadUInt16();
 
-                        if ((nbrruns == 1) && (value == 0) && (length == Container.MaxCapacity - 1)) // special one scenario
+                        if (nbrruns == 1 && value == 0 && length == Container.MaxCapacity - 1) // special one scenario
                         {
                             containers[k] = BitmapContainer.One;
                             specialCase = true;
                             break;
                         }
-                        if ((nbrruns == 1) && (value == 0) && (length == Container.MaxSize - 1)) // special one scenario
+                        if (nbrruns == 1 && value == 0 && length == Container.MaxSize - 1) // special one scenario
                         {
                             containers[k] = ArrayContainer.One;
                             specialCase = true;

@@ -13,6 +13,7 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageReference Include="Moq" Version="4.18.4" />
+    <PackageReference Include="Roaring.Net" Version="1.0.0-alpha.4" />
   </ItemGroup>
 
   <ItemGroup>
