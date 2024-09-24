@@ -87,7 +87,6 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
         return true;
     }
 
-
     internal static BitmapContainer Create(ushort[] values)
     {
         return new BitmapContainer(values.Length, values, false);
@@ -102,6 +101,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     {
         return new BitmapContainer(cardinality, values, negated);
     }
+    
     internal static BitmapContainer CreateXor(ushort[] first, int firstCardinality, ushort[] second, int secondCardinality)
     {
         var data = new ulong[BitmapLength];
@@ -171,7 +171,6 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
         var bc = new BitmapContainer(XorInternal(data, y._bitmap), data);
         return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
     }
-
 
     public static Container operator ^(BitmapContainer x, ArrayContainer y)
     {

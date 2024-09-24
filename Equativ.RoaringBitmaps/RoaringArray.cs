@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Equativ.RoaringBitmaps;
@@ -108,6 +109,7 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int AdvanceUntil(ushort key, int index)
     {
         return Utils.AdvanceUntil(_keys, index, key);

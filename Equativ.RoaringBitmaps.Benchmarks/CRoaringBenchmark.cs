@@ -49,8 +49,8 @@ public class CRoaringBenchmark
     [Params(
         // Paths.Census1881,
         // Paths.Dimension008,
-        // Paths.Dimension033,
-        Paths.WeatherSept85)]
+        Paths.Dimension033)]
+        //Paths.WeatherSept85)]
     public string FileName { get; set; }
 
     [GlobalSetup]
