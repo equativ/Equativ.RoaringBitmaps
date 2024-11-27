@@ -19,7 +19,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
 
     public IEnumerator<int> GetEnumerator()
     {
-        return _highLowContainer.GetEnumerator();
+        return ToArray().GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -31,17 +31,13 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     /// Convert the bitmap to an array of integers
     /// </summary>
     /// <returns>Array of integers</returns>
-    public int[] ToArray()
+    public List<int> ToArray()
     {
-        var array = new int[Cardinality];
-        var pos = 0;
-        foreach (var i in this)
-        {
-            array[pos++] = i;
-        }
-        return array;
+        var list = new List<int>((int)Cardinality);
+        _highLowContainer.EnumerateFill(list);
+        return list;
     }
-
+    
     public bool Equals(RoaringBitmap? other)
     {
         if (ReferenceEquals(this, other))

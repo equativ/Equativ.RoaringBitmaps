@@ -87,7 +87,6 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
         return true;
     }
 
-
     internal static BitmapContainer Create(ushort[] values)
     {
         return new BitmapContainer(values.Length, values, false);
@@ -171,7 +170,6 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
         var bc = new BitmapContainer(XorInternal(data, y._bitmap), data);
         return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
     }
-
 
     public static Container operator ^(BitmapContainer x, ArrayContainer y)
     {
@@ -262,7 +260,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
         return bc != null && Equals(bc);
     }
 
-    public override IEnumerator<ushort> GetEnumerator()
+    public override void EnumerateFill(List<int> list, int key)
     {
         for (var k = 0; k < BitmapLength; k++)
         {
@@ -272,7 +270,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
             {
                 var t = bitset & (~bitset + 1);
                 var result = (ushort) (shiftedK + BitOperations.PopCount(t - 1));
-                yield return result;
+                list.Add(key | result);
                 bitset ^= t;
             }
         }

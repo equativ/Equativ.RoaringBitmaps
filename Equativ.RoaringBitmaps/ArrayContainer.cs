@@ -73,11 +73,11 @@ internal class ArrayContainer : Container, IEquatable<ArrayContainer>
         return ac != null && Equals(ac);
     }
 
-    public override IEnumerator<ushort> GetEnumerator()
+    public override void EnumerateFill(List<int> list, int key)
     {
         for (var i = 0; i < _cardinality; i++)
         {
-            yield return _content[i];
+            list.Add(key | _content[i]);
         }
     }
 

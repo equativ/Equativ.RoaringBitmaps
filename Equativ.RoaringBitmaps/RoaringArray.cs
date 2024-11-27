@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Equativ.RoaringBitmaps;
 
-internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
+internal class RoaringArray : IEquatable<RoaringArray>
 {
     private const int SerialCookieNoRuncontainer = 12346;
     private const int SerialCookie = 12347;
@@ -43,24 +43,16 @@ internal class RoaringArray : IEnumerable<int>, IEquatable<RoaringArray>
     }
 
     public long Cardinality { get; }
-
-    public IEnumerator<int> GetEnumerator()
+    
+    public void EnumerateFill(List<int> list)
     {
         for (var i = 0; i < _size; i++)
         {
-            var key = _keys[i];
-            var shiftedKey = key << 16;
+            ushort key = _keys[i];
+            int shiftedKey = key << 16;
             var container = _values[i];
-            foreach (var @ushort in container)
-            {
-                yield return shiftedKey | @ushort;
-            }
+            container.EnumerateFill(list, shiftedKey);
         }
-    }
-    
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
     }
 
     public bool Equals(RoaringArray? other)
