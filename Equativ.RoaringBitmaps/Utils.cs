@@ -290,8 +290,8 @@ internal static class Utils
         {
             return start;
         }
-        var result = MemoryExtensions.BinarySearch(span.Slice(start), min);
-        return result < 0 ? ~result : result;
+        var result = span.Slice(start).BinarySearch(min);
+        return (result < 0 ? ~result : result) + start;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
