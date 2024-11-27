@@ -27,7 +27,7 @@ internal abstract class Container : IEquatable<Container>
 
     protected abstract bool EqualsInternal(Container other);
 
-    public abstract IEnumerator<ushort> GetEnumerator();
+    public abstract void EnumerateFill(List<int> list, int key);
 
     public static Container operator |(Container x, Container y)
     {
