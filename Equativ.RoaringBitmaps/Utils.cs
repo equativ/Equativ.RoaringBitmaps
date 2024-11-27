@@ -32,49 +32,101 @@ internal static class Utils
     {
         Buffer.BlockCopy(input, iStart * sizeof(ushort), output, oStart * sizeof(ushort), length * sizeof(ushort));
     }
-
+    
     public static int UnionArrays(ushort[] set1, int length1, ushort[] set2, int length2, ushort[] buffer)
     {
-        var pos = 0;
-        int k1 = 0, k2 = 0;
-        if (0 == length2)
+        if (length1 == 0)
         {
-            ArrayCopy(set1, 0, buffer, 0, length1);
+            Array.Copy(set2, 0, buffer, 0, length2);
+            return length2;
+        }
+        if (length2 == 0)
+        {
+            Array.Copy(set1, 0, buffer, 0, length1);
             return length1;
         }
-        if (0 == length1)
+
+        int pos = 0, k1 = 0, k2 = 0;
+        ushort s1 = set1[0], s2 = set2[0];
+
+        while (true)
+        {
+            if (s1 < s2)
+            {
+                buffer[pos++] = s1;
+                if (++k1 >= length1)
+                {
+                    Array.Copy(set2, k2, buffer, pos, length2 - k2);
+                    return pos + length2 - k2;
+                }
+                s1 = set1[k1];
+            }
+            else if (s1 == s2)
+            {
+                buffer[pos++] = s1;
+                if (++k1 >= length1)
+                {
+                    Array.Copy(set2, ++k2, buffer, pos, length2 - k2);
+                    return pos + length2 - k2;
+                }
+                if (++k2 >= length2)
+                {
+                    Array.Copy(set1, k1, buffer, pos, length1 - k1);
+                    return pos + length1 - k1;
+                }
+                s1 = set1[k1];
+                s2 = set2[k2];
+            }
+            else
+            {
+                buffer[pos++] = s2;
+                if (++k2 >= length2)
+                {
+                    Array.Copy(set1, k1, buffer, pos, length1 - k1);
+                    return pos + length1 - k1;
+                }
+                s2 = set2[k2];
+            }
+        }
+    }
+
+    public static int UnionArraysGpt(ushort[] set1, int length1, ushort[] set2, int length2, ushort[] buffer)
+    {
+        if (length1 == 0)
         {
             ArrayCopy(set2, 0, buffer, 0, length2);
             return length2;
         }
-        var s1 = set1[k1];
-        var s2 = set2[k2];
+        if (length2 == 0)
+        {
+            ArrayCopy(set1, 0, buffer, 0, length1);
+            return length1;
+        }
+    
+        int pos = 0, k1 = 0, k2 = 0;
+        ushort s1 = set1[0], s2 = set2[0];
+    
         while (true)
         {
-            int v1 = s1;
-            int v2 = s2;
-            if (v1 < v2)
+            if (s1 < s2)
             {
                 buffer[pos++] = s1;
-                ++k1;
-                if (k1 >= length1)
+                if (++k1 >= length1)
                 {
                     ArrayCopy(set2, k2, buffer, pos, length2 - k2);
                     return pos + length2 - k2;
                 }
                 s1 = set1[k1];
             }
-            else if (v1 == v2)
+            else if (s1 == s2)
             {
                 buffer[pos++] = s1;
-                ++k1;
-                ++k2;
-                if (k1 >= length1)
+                if (++k1 >= length1)
                 {
-                    ArrayCopy(set2, k2, buffer, pos, length2 - k2);
+                    ArrayCopy(set2, ++k2, buffer, pos, length2 - k2);
                     return pos + length2 - k2;
                 }
-                if (k2 >= length2)
+                if (++k2 >= length2)
                 {
                     ArrayCopy(set1, k1, buffer, pos, length1 - k1);
                     return pos + length1 - k1;
@@ -82,11 +134,10 @@ internal static class Utils
                 s1 = set1[k1];
                 s2 = set2[k2];
             }
-            else // if (set1[k1]>set2[k2])
+            else
             {
                 buffer[pos++] = s2;
-                ++k2;
-                if (k2 >= length2)
+                if (++k2 >= length2)
                 {
                     ArrayCopy(set1, k1, buffer, pos, length1 - k1);
                     return pos + length1 - k1;
@@ -95,6 +146,62 @@ internal static class Utils
             }
         }
     }
+    
+    public static int UnionArraysLemire(ushort[] set1, int length1, ushort[] set2, int length2, ushort[] buffer)
+    {
+        if (length1 == 0) {
+            for (int i = 0; i < length2; i++) {
+                buffer[i] = set2[i];
+            }
+            return length2;
+        }
+        if (length2 == 0) {
+            for (int i = 0; i < length1; i++) {
+                buffer[i] = set1[i];
+            }
+            return length1;
+        }
+
+        int pos1 = 0;
+        int pos2 = 0;
+        ushort v1 = set1[pos1];
+        ushort v2 = set2[pos2];
+        int pos = 0;
+        while (true) {
+            if (v1 < v2) {
+                buffer[pos++] = v1;
+                pos1++;
+                if (pos1 == length1) {
+                    break;
+                }
+                v1 = set1[pos1];
+            } else if (v1 > v2) {
+                buffer[pos++] = v2;
+                pos2++;
+                if (pos2 == length2) {
+                    break;
+                }
+                v2 = set2[pos2];
+            } else {
+                buffer[pos++] = set1[pos1];
+                pos1++;
+                pos2++;
+                if ((pos1 == length1) || (pos2 == length2)) {
+                    break;
+                }
+                v1 = set1[pos1];
+                v2 = set2[pos2];
+            }
+        }
+        while (pos1 < length1) {
+            buffer[pos++] = set1[pos1++];
+        }
+        while (pos2 < length2) {
+            buffer[pos++] = set2[pos2++];
+        }
+        return pos;
+    }
+
 
     public static int DifferenceArrays(ushort[] set1, int length1, ushort[] set2, int length2, ushort[] buffer)
     {

@@ -9,17 +9,17 @@ public class DatasetsBenchmark
     private RoaringBitmap[] _bitmaps;
     
     [Params(
-        Paths.Census1881,
-        Paths.Census1881Srt,
-        Paths.CensusIncome,
-        Paths.Census1881Srt,
-        Paths.Dimension003,
-        Paths.Dimension008,
-        Paths.Dimension033,
-        Paths.UsCensus2000,
-        Paths.WeatherSept85,
-        Paths.WeatherSept85Srt,
-        Paths.WikileaksNoQuotes,
+        // Paths.Census1881,
+        // Paths.Census1881Srt,
+        // Paths.CensusIncome,
+        // Paths.Census1881Srt,
+        // Paths.Dimension003,
+        // Paths.Dimension008,
+        // Paths.Dimension033,
+        // Paths.UsCensus2000,
+        // Paths.WeatherSept85,
+        // Paths.WeatherSept85Srt,
+        // Paths.WikileaksNoQuotes,
         Paths.WikileaksNoQuotesSrt)]
     public string FileName { get; set; }
 
