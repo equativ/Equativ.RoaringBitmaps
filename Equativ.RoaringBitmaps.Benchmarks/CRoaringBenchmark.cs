@@ -41,16 +41,14 @@ namespace Equativ.RoaringBitmaps.Benchmark;
 // | Iterate          | weather_sept_85.zip | 74,620.41 us | 252.467 us |   236.158 us | 74,613.52 us | 50459.65 KB |
 // | Iterate_CRoaring | weather_sept_85.zip | 27,164.46 us | 595.106 us | 1,697.871 us | 26,547.94 us | 50293.08 KB |
 [MemoryDiagnoser(false)]
+[SimpleJob(launchCount: 1, warmupCount: 1, invocationCount: 1)]
 public class CRoaringBenchmark
 {
     private RoaringBitmap[] _bitmaps;
     private Roaring32Bitmap[] _bitmapsCRoaring;
     
-    [Params(
-        // Paths.Census1881,
-        // Paths.Dimension008,
-        // Paths.Dimension033,
-        Paths.WeatherSept85)]
+    [Params(Paths.Census1881)]
+    // [Params(Paths.Census1881, Paths.Dimension008, Paths.Dimension033, Paths.WeatherSept85)]
     public string FileName { get; set; }
 
     [GlobalSetup]
