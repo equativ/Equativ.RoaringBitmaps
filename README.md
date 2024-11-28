@@ -33,7 +33,8 @@ Benchmarks include numbers on [Roaring.Net](https://github.com/k-wojcik/Roaring.
 Charts are generated using [chartbenchmark.net](https://chartbenchmark.net/).
 
 ### Macbook pro M1 (ARM64)
-![Performance](Resources/bench_m1.png)
+![Performance](Resources/bench_m1.png)  
+(lower is better)
 
 ### How can this be faster than the C implementation?
 

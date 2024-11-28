@@ -12,6 +12,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: lscpu
+      run: lscpu
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
@@ -26,5 +29,8 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal --configuration Release
 
-    - name: Benchmark
+    - name: Benchmark Popcnt
       run:  dotnet run -p Equativ.RoaringBitmaps.Benchmarks -c Release -- -f '*Popcnt*'
+
+    - name: Benchmark against CRoaring
+      run:  dotnet run -p Equativ.RoaringBitmaps.Benchmarks -c Release -- -f '*CRoaring*'
