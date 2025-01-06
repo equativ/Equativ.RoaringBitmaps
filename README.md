@@ -3,6 +3,7 @@
 Equativ.RoaringBitmaps is a pure C# implementation of [RoaringBitmap](http://roaringbitmap.org).
 - ✨ **Fully managed code!** No risk of segfaults or memory leaks due to missed disposals.
 - 🚀 **Blazingly fast!** See [benchmarks](#performance).
+-  **Portable**: It works everywhere where .NET is supported.
 
 ## Usage
 
@@ -36,9 +37,11 @@ Charts are generated using [chartbenchmark.net](https://chartbenchmark.net/).
 ![Performance](Resources/bench_m1.png)  
 (lower is better)
 
+## F.A.Q.
+
 ### How can this be faster than the C implementation?
 
-Several reasons can explain why this benchmark numbers are sometimes in favor of this implementation:
+There can be a few reasons:
+- Modern C# performs really well for this kind of workloads, it shall not be underestimated.
 - [Roaring.Net](https://github.com/k-wojcik/Roaring.Net) is wrapper, which means that there is a marshalling cost between C# and C.
-- This implementation has a few optimizations that are not present in the C implementation.
-- Modern C# is perform really well for this kind of workloads.
+- This implementation has a few optimizations that are not present in the C implementation, especially for ARM CPUs.
