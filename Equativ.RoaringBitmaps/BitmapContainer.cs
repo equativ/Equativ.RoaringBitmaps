@@ -132,7 +132,8 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     private static ulong[] Clone(ulong[] data)
     {
         var result = new ulong[BitmapLength];
-        Buffer.BlockCopy(data, 0, result, 0, BitmapLength * sizeof(ulong));
+        //Buffer.BlockCopy(data, 0, result, 0, BitmapLength * sizeof(ulong));
+        Array.Copy(data, result, BitmapLength);
         return result;
     }
 
