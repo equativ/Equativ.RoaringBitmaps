@@ -53,7 +53,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     
     public override bool Equals(object? obj)
     {
-        var ra = obj as RoaringArray;
+        var ra = obj as RoaringBitmap;
         return ra != null && Equals(ra);
     }
 
