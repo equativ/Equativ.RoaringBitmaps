@@ -266,6 +266,25 @@ public class RoaringBitmapTests
         Assert.Equal(rb, rb2);
         Assert.Equal(rb.GetHashCode(), rb2.GetHashCode());
     }
+    
+    [Fact]
+    public void Equals_Simplified()
+    {
+        var rb = RoaringBitmap.Create(1, 2, 3);
+        var rb2 = RoaringBitmap.Create(1, 2, 3);
+
+        Assert.True(rb.Equals(rb2));
+    }
+    
+    /// <summary> Unlike <see cref="Equals_Simplified"/>, uses <see cref="object.Equals(object?)"/> overload. </summary>
+    [Fact]
+    public void ObjectEquals_Simplified()
+    {
+        object rb = RoaringBitmap.Create(1, 2, 3);
+        object rb2 = RoaringBitmap.Create(1, 2, 3);
+
+        Assert.True(rb.Equals(rb2));
+    }
 
     [Fact]
     public void LargeArray()
