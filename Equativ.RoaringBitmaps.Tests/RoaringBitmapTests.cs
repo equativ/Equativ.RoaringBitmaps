@@ -505,6 +505,32 @@ public class RoaringBitmapTests
     }
     
     [Fact]
+    public void BitmapContainer_Xor_WithItself_HasZeroCardinality()
+    {
+        ushort[] data = Enumerable.Range(0, Container.MaxSize + 200)
+            .Select(i => (ushort)i)
+            .ToArray();
+        
+        BitmapContainer rb = BitmapContainer.Create(data);
+        Container selfXor = rb ^ rb;
+
+        Assert.Equal(0, selfXor.Cardinality);
+    }
+    
+    [Fact]
+    public void Xor_WithItselfLarger_EqualsEmpty()
+    {
+        int[] data = Enumerable.Range(0, Container.MaxSize + 200)
+            .ToArray();
+        
+        var rb = RoaringBitmap.Create(data);
+        var selfXor = rb ^ rb;
+        var empty = RoaringBitmap.Create([]);
+        
+        Assert.True(selfXor.Equals(empty), "both are empty");
+    }
+    
+    [Fact]
     public void XorPartiallyArrayContainer()
     {
         var rb = RoaringBitmap.Create(Enumerable.Range(1000, 200));
