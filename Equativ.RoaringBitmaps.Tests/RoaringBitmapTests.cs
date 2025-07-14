@@ -489,7 +489,21 @@ public class RoaringBitmapTests
         var comparison = firstList.Union(secondList).OrderBy(t => t).ToList();
         Assert.Equal(comparison, rbList);
     }
-
+    
+    [Fact]
+    public void Xor_WithItself_EqualsToEmpty()
+    {
+        var rb = RoaringBitmap.Create(10, 20);
+        var selfXor = rb ^ rb;
+        var empty = RoaringBitmap.Create();
+        
+        // Pre-conditions showing both are empty
+        Assert.Equal(0, selfXor.Cardinality);
+        Assert.Equal(0, empty.Cardinality);
+        
+        Assert.True(selfXor.Equals(empty), "both are empty");
+    }
+    
     [Fact]
     public void XorPartiallyArrayContainer()
     {
