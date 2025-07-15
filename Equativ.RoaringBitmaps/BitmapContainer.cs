@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace Equativ.RoaringBitmaps;
 
@@ -194,20 +197,44 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
 
     private static int XorInternal(ulong[] first, ulong[] second)
     {
-        for (var k = 0; k < BitmapLength; k++)
+        if (Avx2.IsSupported)
         {
-            first[k] ^= second[k];
+            var firstVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(first);
+            var secondVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(second);
+            for (var i = 0; i < firstVector.Length; i++) 
+                firstVector[i] = Avx2.Xor(firstVector[i], secondVector[i]);
+
+            for (var k = firstVector.Length * 4; k < first.Length; k++) 
+                first[k] ^= second[k];
         }
+        else
+        {
+            for (var k = 0; k < BitmapLength; k++) 
+                first[k] ^= second[k];
+        }
+
         var c = Utils.Popcnt(first);
         return c;
     }
 
     private static int AndNotInternal(ulong[] first, ulong[] second)
     {
-        for (var k = 0; k < first.Length; k++)
+        if (Avx2.IsSupported)
         {
-            first[k] &= ~second[k];
+            var firstVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(first);
+            var secondVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(second);
+            for (var i = 0; i < firstVector.Length; i++) 
+                firstVector[i] = Avx2.AndNot(secondVector[i], firstVector[i]);
+            
+            for (var k = firstVector.Length * 4; k < first.Length; k++) 
+                first[k] &= ~second[k];
         }
+        else
+        {
+            for (var k = 0; k < first.Length; k++) 
+                first[k] &= ~second[k];
+        }
+
         var c = Utils.Popcnt(first);
         return c;
     }
@@ -224,20 +251,44 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
 
     private static int OrInternal(ulong[] first, ulong[] second)
     {
-        for (var k = 0; k < BitmapLength; k++)
+        if (Avx2.IsSupported)
         {
-            first[k] |= second[k];
+            var firstVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(first);
+            var secondVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(second);
+            for (var i = 0; i < firstVector.Length; i++) 
+                firstVector[i] = Avx2.Or(firstVector[i], secondVector[i]);
+            
+            for (var k = firstVector.Length * 4; k < first.Length; k++) 
+                first[k] |= second[k];
         }
+        else
+        {
+            for (var k = 0; k < BitmapLength; k++) 
+                first[k] |= second[k];
+        }
+        
         var c = Utils.Popcnt(first);
         return c;
     }
 
     private static int AndInternal(ulong[] first, ulong[] second)
     {
-        for (var k = 0; k < BitmapLength; k++)
+        if (Avx2.IsSupported)
         {
-            first[k] &= second[k];
+            var firstVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(first);
+            var secondVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(second);
+            for (var i = 0; i < firstVector.Length; i++) 
+                firstVector[i] = Avx2.And(firstVector[i], secondVector[i]);
+            
+            for (var k = firstVector.Length * 4; k < first.Length; k++) 
+                first[k] &= second[k];
         }
+        else
+        {
+            for (var k = 0; k < BitmapLength; k++) 
+                first[k] &= second[k];
+        }
+        
         var c = Utils.Popcnt(first);
         return c;
     }
