@@ -61,7 +61,7 @@ internal class ArrayContainer : Container, IEquatable<ArrayContainer>
 
     internal static ArrayContainer Create(BitmapContainer bc)
     {
-        var data = new ushort[bc.Cardinality];
+        var data =  GC.AllocateUninitializedArray<ushort>(bc.Cardinality);
         var cardinality = bc.FillArray(data);
         var result = new ArrayContainer(cardinality, data);
         return result;
