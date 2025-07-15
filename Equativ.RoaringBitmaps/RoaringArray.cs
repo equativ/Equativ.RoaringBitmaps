@@ -241,9 +241,14 @@ internal class RoaringArray : IEquatable<RoaringArray>
             {
                 if (xKey == yKey)
                 {
-                    keys.Add(xKey);
-                    containers.Add(x._values[xPos] ^ y._values[yPos]);
-                    size++;
+                    var c = x._values[xPos] ^ y._values[yPos];
+                    if (c.Cardinality > 0)
+                    {
+                        keys.Add(xKey);
+                        containers.Add(c);
+                        size++;
+                    }
+
                     xPos++;
                     yPos++;
                     if (xPos == xLength || yPos == yLength)
