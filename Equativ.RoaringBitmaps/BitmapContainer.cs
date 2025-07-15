@@ -80,6 +80,52 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
         {
             return false;
         }
+        
+        if (Avx2.IsSupported)
+        {
+            var leftVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(_bitmap);
+            var rightVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(other._bitmap);
+            for (var i = 0; i < leftVector.Length; i++)
+            {
+                var cmp = Avx2.CompareEqual(leftVector[i], rightVector[i]);
+                if (Avx2.MoveMask(cmp.AsByte()) != -1)
+                {
+                    return false;
+                }
+            }
+
+            for (var j = leftVector.Length * 4; j < BitmapLength; j++)
+            {
+                if (_bitmap[j] != other._bitmap[j])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        if (Vector.IsHardwareAccelerated)
+        {
+            var leftVec = MemoryMarshal.Cast<ulong, Vector<ulong>>(_bitmap);
+            var rightVec = MemoryMarshal.Cast<ulong, Vector<ulong>>(other._bitmap);
+            for (var i = 0; i < leftVec.Length; i++)
+            {
+                if (!Vector.EqualsAll(leftVec[i], rightVec[i]))
+                {
+                    return false;
+                }
+            }
+
+            for (var j = leftVec.Length * Vector<ulong>.Count; j < BitmapLength; j++)
+            {
+                if (_bitmap[j] != other._bitmap[j])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        
         for (var i = 0; i < BitmapLength; i++)
         {
             if (_bitmap[i] != other._bitmap[i])
@@ -313,16 +359,43 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
 
     public override void EnumerateFill(List<int> list, int key)
     {
-        for (var k = 0; k < BitmapLength; k++)
+        if (Avx2.IsSupported)
         {
-            var bitset = _bitmap[k];
-            var shiftedK = k << 6;
-            while (bitset != 0)
+            var vectorViews = MemoryMarshal.Cast<ulong, Vector256<ulong>>(_bitmap);
+            for (var i = 0; i < vectorViews.Length; i++)
             {
-                var t = bitset & (~bitset + 1);
-                var result = (ushort) (shiftedK + BitOperations.PopCount(t - 1));
-                list.Add(key | result);
-                bitset ^= t;
+                var vector = vectorViews[i];
+                if (Avx.TestZ(vector, vector))
+                    continue;
+
+                var baseIndex = i * 4;
+                for (var j = 0; j < 4; j++)
+                {
+                    var bitset = _bitmap[baseIndex + j];
+                    var shiftedK = (baseIndex + j) << 6;
+                    while (bitset != 0)
+                    {
+                        int idx = BitOperations.TrailingZeroCount(bitset);
+                        var result = (ushort)(shiftedK + idx);
+                        list.Add(key | result);
+                        bitset &= bitset - 1;
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (var k = 0; k < BitmapLength; k++)
+            {
+                var bitset = _bitmap[k];
+                var shiftedK = k << 6;
+                while (bitset != 0)
+                {
+                    int idx = BitOperations.TrailingZeroCount(bitset);
+                    var result = (ushort)(shiftedK + idx);
+                    list.Add(key | result);
+                    bitset &= bitset - 1;
+                }
             }
         }
     }
@@ -330,17 +403,44 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     internal int FillArray(ushort[] data)
     {
         var pos = 0;
-        for (var k = 0; k < BitmapLength; k++)
+        if (Avx2.IsSupported)
         {
-            var bitset = _bitmap[k];
-            var shiftedK = k << 6;
-            while (bitset != 0)
+            var vecs = MemoryMarshal.Cast<ulong, Vector256<ulong>>(_bitmap);
+            for (var i = 0; i < vecs.Length; i++)
             {
-                var t = bitset & (~bitset + 1);
-                data[pos++] = (ushort) (shiftedK + BitOperations.PopCount(t - 1));
-                bitset ^= t;
+                var v = vecs[i];
+                if (Avx.TestZ(v, v))
+                    continue;
+
+                var baseIndex = i * 4;
+                for (var j = 0; j < 4; j++)
+                {
+                    var bitset = _bitmap[baseIndex + j];
+                    var shiftedK = (baseIndex + j) << 6;
+                    while (bitset != 0)
+                    {
+                        int idx = BitOperations.TrailingZeroCount(bitset); 
+                        data[pos++] = (ushort)(shiftedK + idx);
+                        bitset &= bitset - 1;
+                    }
+                }
             }
         }
+        else
+        {
+            for (var k = 0; k < BitmapLength; k++)
+            {
+                var bitset = _bitmap[k];
+                var shiftedK = k << 6;
+                while (bitset != 0)
+                {
+                    int idx = BitOperations.TrailingZeroCount(bitset);
+                    data[pos++] = (ushort)(shiftedK + idx);
+                    bitset &= bitset - 1;
+                }
+            }
+        }
+
         return _cardinality;
     }
 
