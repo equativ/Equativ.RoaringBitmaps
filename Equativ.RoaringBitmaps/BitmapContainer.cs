@@ -18,7 +18,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
 
     static BitmapContainer()
     {
-        var data = new ulong[BitmapLength];
+        var data = GC.AllocateUninitializedArray<ulong>(BitmapLength);
         for (var i = 0; i < BitmapLength; i++)
         {
             data[i] = ulong.MaxValue;
@@ -180,7 +180,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
 
     private static ulong[] Clone(ulong[] data)
     {
-        var result = new ulong[BitmapLength];
+        var result = GC.AllocateUninitializedArray<ulong>(BitmapLength);
         Buffer.BlockCopy(data, 0, result, 0, BitmapLength * sizeof(ulong));
         return result;
     }
@@ -474,7 +474,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
 
     public static BitmapContainer Deserialize(BinaryReader binaryReader, int cardinality)
     {
-        var data = new ulong[BitmapLength];
+        var data = GC.AllocateUninitializedArray<ulong>(BitmapLength);
         for (var i = 0; i < BitmapLength; i++)
         {
             data[i] = binaryReader.ReadUInt64();
