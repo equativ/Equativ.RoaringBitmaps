@@ -1,6 +1,6 @@
 using BenchmarkDotNet.Attributes;
 
-namespace Equativ.RoaringBitmaps.Benchmark;
+namespace Equativ.RoaringBitmaps.Benchmarks;
 
 public class PopcntBenchmark
 {

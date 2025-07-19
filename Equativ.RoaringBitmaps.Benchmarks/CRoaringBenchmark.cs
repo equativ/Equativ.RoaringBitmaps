@@ -3,7 +3,7 @@ using BenchmarkDotNet.Configs;
 using Equativ.RoaringBitmaps.Datasets;
 using Roaring.Net.CRoaring;
 
-namespace Equativ.RoaringBitmaps.Benchmark;
+namespace Equativ.RoaringBitmaps.Benchmarks;
 
 // Ran on Macbook pro M1
 // ⚠️Unmanaged allocation happening in CRoaring are not tracked by the memory diagnoser.

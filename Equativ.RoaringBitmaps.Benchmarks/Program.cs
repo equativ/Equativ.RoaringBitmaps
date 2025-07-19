@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Running;
 using Equativ.RoaringBitmaps.Datasets;
 
-namespace Equativ.RoaringBitmaps.Benchmark;
+namespace Equativ.RoaringBitmaps.Benchmarks;
 
 internal class Program
 {
