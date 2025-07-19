@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <PackageProjectUrl>https://github.com/equativ/Equativ.RoaringBitmaps</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/equativ/Equativ.RoaringBitmaps/blob/main/LICENSE</PackageLicenseUrl>
     <PackageTags>Equativ.RoaringBitmaps</PackageTags>

@@ -18,7 +18,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 9.0.x
 
     - name: Restore
       run: dotnet restore
@@ -30,7 +30,7 @@ jobs:
       run: dotnet test --no-build --verbosity normal --configuration Release
 
     - name: Benchmark Popcnt
-      run:  dotnet run -p Equativ.RoaringBitmaps.Benchmarks -c Release -- -f '*Popcnt*'
+      run:  dotnet run --project Equativ.RoaringBitmaps.Benchmarks -c Release -- -f '*Popcnt*'
 
     - name: Benchmark against CRoaring
-      run:  dotnet run -p Equativ.RoaringBitmaps.Benchmarks -c Release -- -f '*CRoaring*'
+      run:  dotnet run --project Equativ.RoaringBitmaps.Benchmarks -c Release -- -f '*CRoaring*'
