@@ -88,25 +88,51 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     /// <returns>RoaringBitmap</returns>
     public static RoaringBitmap Create(IEnumerable<int> values)
     {
-        // Todo: Optimize this (avoid Linq)
-        var groupbyHb = values.Distinct().OrderBy(t => t).GroupBy(Utils.HighBits).OrderBy(t => t.Key).ToList();
+        var data = values as int[] ?? values.ToArray();
+        if (data.Length == 0)
+        {
+            return new RoaringBitmap(new RoaringArray(0, new List<ushort>(), new List<Container>()));
+        }
+
+        Array.Sort(data);
+
+        var uniqueCount = 1;
+        for (var i = 1; i < data.Length; i++)
+        {
+            if (data[i] != data[uniqueCount - 1])
+            {
+                data[uniqueCount++] = data[i];
+            }
+        }
+
         var keys = new List<ushort>();
         var containers = new List<Container>();
-        var size = 0;
-        foreach (var group in groupbyHb)
+        var index = 0;
+
+        while (index < uniqueCount)
         {
-            keys.Add(group.Key);
-            if (group.Count() > Container.MaxSize)
+            var hb = Utils.HighBits(data[index]);
+            var start = index;
+            index++;
+            while (index < uniqueCount && Utils.HighBits(data[index]) == hb)
             {
-                containers.Add(BitmapContainer.Create(group.Select(Utils.LowBits).ToArray()));
+                index++;
             }
-            else
+
+            var count = index - start;
+            var lows = new ushort[count];
+            for (var j = 0; j < count; j++)
             {
-                containers.Add(ArrayContainer.Create(group.Select(Utils.LowBits).ToArray()));
+                lows[j] = Utils.LowBits(data[start + j]);
             }
-            size++;
+
+            keys.Add(hb);
+            containers.Add(count > Container.MaxSize
+                ? BitmapContainer.Create(lows)
+                : ArrayContainer.Create(lows));
         }
-        return new RoaringBitmap(new RoaringArray(size, keys, containers));
+
+        return new RoaringBitmap(new RoaringArray(keys.Count, keys, containers));
     }
 
     /// <summary>
