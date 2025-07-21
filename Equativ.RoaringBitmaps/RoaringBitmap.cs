@@ -96,6 +96,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
 
         Array.Sort(data);
 
+        // In-place deduplication (two pointers technique)
         var uniqueCount = 1;
         for (var i = 1; i < data.Length; i++)
         {

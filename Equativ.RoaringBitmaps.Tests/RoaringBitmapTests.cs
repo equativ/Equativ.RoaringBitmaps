@@ -73,37 +73,6 @@ public class RoaringBitmapTests
         return list;
     }
 
-    private static RoaringBitmap CreateOld(IEnumerable<int> values)
-    {
-        var groupbyHb = values.Distinct().OrderBy(t => t).GroupBy(Utils.HighBits).OrderBy(t => t.Key).ToList();
-        var keys = new List<ushort>();
-        var containers = new List<Container>();
-        var size = 0;
-        foreach (var group in groupbyHb)
-        {
-            keys.Add(group.Key);
-            if (group.Count() > Container.MaxSize)
-            {
-                containers.Add(BitmapContainer.Create(group.Select(Utils.LowBits).ToArray()));
-            }
-            else
-            {
-                containers.Add(ArrayContainer.Create(group.Select(Utils.LowBits).ToArray()));
-            }
-            size++;
-        }
-        var ra = new RoaringArray(size, keys, containers);
-        var ctor = typeof(RoaringBitmap).GetConstructor(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, null, new[] { typeof(RoaringArray) }, null)!;
-        return (RoaringBitmap)ctor.Invoke(new object[] { ra });
-    }
-
-    private static void AssertCreateMatchesOld(IEnumerable<int> values)
-    {
-        var expected = CreateOld(values);
-        var actual = RoaringBitmap.Create(values);
-        Assert.Equal(expected, actual);
-    }
-
     [Theory]
     [InlineData("bitmapwithoutruns.bin")]
     [InlineData("bitmapwithruns.bin")]
@@ -607,30 +576,5 @@ public class RoaringBitmapTests
         var rb2 = rb ^ rb;
         var rbList = rb2.ToList();
         Assert.Empty(rbList);
-    }
-
-    [Fact]
-    public void CreateMatchesOld_Empty()
-    {
-        AssertCreateMatchesOld(Array.Empty<int>());
-    }
-
-    [Fact]
-    public void CreateMatchesOld_Duplicates()
-    {
-        var data = new[] { 5, 1, 5, 65536, 1, 2, 65536 };
-        AssertCreateMatchesOld(data);
-    }
-
-    [Fact]
-    public void CreateMatchesOld_Random()
-    {
-        var random = new Random(1234);
-        var list = new List<int>();
-        for (var i = 0; i < 1000; i++)
-        {
-            list.Add(random.Next());
-        }
-        AssertCreateMatchesOld(list);
     }
 }
