@@ -29,8 +29,5 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal --configuration Release
 
-    - name: Benchmark Popcnt
-      run:  dotnet run -p Equativ.RoaringBitmaps.Benchmarks -c Release -- -f '*Popcnt*'
-
     - name: Benchmark against CRoaring
       run:  dotnet run -p Equativ.RoaringBitmaps.Benchmarks -c Release -- -f '*CRoaring*'
