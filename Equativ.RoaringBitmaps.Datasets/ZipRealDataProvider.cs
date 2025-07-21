@@ -35,6 +35,22 @@ public class ZipRealDataProvider : IEnumerable<RoaringBitmap>, IDisposable
             }
         }
     }
+    
+    public IEnumerable<List<int>> EnumerateValues()
+    {
+        foreach (var zipArchiveEntry in _mArchive.Entries)
+        {
+            using (var stream = zipArchiveEntry.Open())
+            {
+                using (var stringReader = new StreamReader(stream))
+                {
+                    var split = stringReader.ReadLine().Split(',');
+                    var values = split.Select(int.Parse).ToList();
+                    yield return values;
+                }
+            }
+        }
+    }
 
     IEnumerator IEnumerable.GetEnumerator()
     {

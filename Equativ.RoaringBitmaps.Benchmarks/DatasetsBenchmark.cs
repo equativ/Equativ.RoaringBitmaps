@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Equativ.RoaringBitmaps.Datasets;
 
-namespace Equativ.RoaringBitmaps.Benchmark;
+namespace Equativ.RoaringBitmaps.Benchmarks;
 
 [MemoryDiagnoser(false)]
 public class DatasetsBenchmark

@@ -1,4 +1,6 @@
 ﻿using Xunit;
+using System.Linq;
+using System.Reflection;
 
 namespace Equativ.RoaringBitmaps.Tests;
 
