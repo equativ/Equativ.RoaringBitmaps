@@ -26,9 +26,13 @@ public class CRoaringBenchmark
     private Roaring32Bitmap[] _bitmapsCRoaring;
     
     [Params(
-        // Paths.Census1881,
-        // Paths.Dimension008,
-        // Paths.Dimension033,
+        Paths.Census1881,
+        Paths.Dimension008,
+        Paths.Dimension033,
+        Paths.UsCensus2000,
+        Paths.CensusIncome,
+        Paths.CensusIncomeSrt,
+        Paths.Census1881Srt,
         Paths.WeatherSept85)]
     public string FileName { get; set; }
 
@@ -42,6 +46,7 @@ public class CRoaringBenchmark
         _bitmapsCRoaring = _bitmaps.Select(x => Roaring32Bitmap.FromValues(x.Select(y => (uint)y).ToArray())).ToArray();
     }
 
+    /*
     [Benchmark]
     [BenchmarkCategory("Or")]
     public long Or()
@@ -91,6 +96,7 @@ public class CRoaringBenchmark
         }
         return total;
     }
+    */
 
     [Benchmark]
     [BenchmarkCategory("And")]
@@ -117,6 +123,7 @@ public class CRoaringBenchmark
         return total;
     }
 
+    /*
     [Benchmark]
     [BenchmarkCategory("Iterate")]
     public long Iterate()
@@ -152,4 +159,5 @@ public class CRoaringBenchmark
         }
         return total;
     }
+    */
 }

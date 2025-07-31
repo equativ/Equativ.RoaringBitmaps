@@ -58,34 +58,39 @@ internal static class PopcntAvx2
         Vector256<long> ones = Vector256<long>.Zero;
         Vector256<long> twos = Vector256<long>.Zero;
 
-        int limit = size - size % 4;
+        // int limit = size - size % 4;
+        //
+        // if (limit >= 4)
+        // {
+        //     ref var end = ref Unsafe.Add(ref start, limit);
+        //
+        //     while (Unsafe.IsAddressLessThan(ref start, ref end))
+        //     {
+        //         CSA(out var twosA, out ones, ref ones, ref start, ref Unsafe.Add(ref start, 1));
+        //         CSA(out var twosB, out ones, ref ones, ref Unsafe.Add(ref start, 2), ref Unsafe.Add(ref start, 3));
+        //         CSA(out var fours, out twos, ref twos, ref twosA, ref twosB);
+        //
+        //         total = Avx2.Add(total, PopcntVec(ref fours));
+        //     
+        //         start = ref Unsafe.Add(ref start, 4);
+        //     }
+        //
+        //     total = Avx2.ShiftLeftLogical(total, 2);
+        //     total = Avx2.Add(total, Avx2.ShiftLeftLogical(PopcntVec(ref twos), 1));
+        //     total = Avx2.Add(total, PopcntVec(ref ones));
+        // }
+        //
+        // ref var end2 = ref Unsafe.Add(ref start, size % 4);
 
-        if (limit >= 4)
-        {
-            ref var end = ref Unsafe.Add(ref start, limit);
-
-            while (Unsafe.IsAddressLessThan(ref start, ref end))
-            {
-                CSA(out var twosA, out ones, ref ones, ref start, ref Unsafe.Add(ref start, 1));
-                CSA(out var twosB, out ones, ref ones, ref Unsafe.Add(ref start, 2), ref Unsafe.Add(ref start, 3));
-                CSA(out var fours, out twos, ref twos, ref twosA, ref twosB);
-
-                total = Avx2.Add(total, PopcntVec(ref fours));
-            
-                start = ref Unsafe.Add(ref start, 4);
-            }
-
-            total = Avx2.ShiftLeftLogical(total, 2);
-            total = Avx2.Add(total, Avx2.ShiftLeftLogical(PopcntVec(ref twos), 1));
-            total = Avx2.Add(total, PopcntVec(ref ones));
-        }
+        ref var end2 = ref Unsafe.Add(ref start, size);
         
-        ref var end2 = ref Unsafe.Add(ref start, size % 4);
-
         // Handle remaining vectors
         while (Unsafe.IsAddressLessThan(ref start, ref end2))
         {
-            total = Avx2.Add(total, PopcntVec(ref start));
+            if (!Vector256.EqualsAll(Vector256<long>.Zero, start))
+            {
+                total = Avx2.Add(total, PopcntVec(ref start));
+            }
             start = ref Unsafe.Add(ref start, 1);
         }
 
