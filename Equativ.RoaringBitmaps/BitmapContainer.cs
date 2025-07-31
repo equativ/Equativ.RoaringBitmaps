@@ -320,21 +320,50 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
 
     private static int AndInternal(ulong[] first, ulong[] second)
     {
-        if (Avx2.IsSupported)
-        {
-            var firstVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(first);
-            var secondVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(second);
-            for (var i = 0; i < firstVector.Length; i++) 
-                firstVector[i] = Vector256.BitwiseAnd(firstVector[i], secondVector[i]);
-        }
-        else if (Vector128.IsHardwareAccelerated)
-        {
-            var firstVector = MemoryMarshal.Cast<ulong, Vector128<ulong>>(first);
-            var secondVector = MemoryMarshal.Cast<ulong, Vector128<ulong>>(second);
-            for (var i = 0; i < firstVector.Length; i++) 
-                firstVector[i] = Vector128.BitwiseAnd(firstVector[i], secondVector[i]);
-        }
-        else
+        // if (Avx2.IsSupported)
+        // {
+        //     // var firstVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(first);
+        //     // var secondVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(second);
+        //     // for (var i = 0; i < firstVector.Length; i++) 
+        //     //     firstVector[i] = Vector256.BitwiseAnd(firstVector[i], secondVector[i]);
+        //     
+        //     uint len = (uint)first.Length;
+        //     
+        //     ref ulong pFirst = ref MemoryMarshal.GetArrayDataReference(first);
+        //     ref ulong pSecond = ref MemoryMarshal.GetArrayDataReference(second);
+        //     
+        //     for (nuint i = 0; i < len; i += 4)
+        //     {
+        //         var v1 = Vector256.LoadUnsafe(ref pFirst, i);
+        //         var v2 = Vector256.LoadUnsafe(ref pSecond, i);
+        //         var result = Vector256.BitwiseAnd(v1, v2);
+        //         result.StoreUnsafe(ref pFirst, i);
+        //     }
+        // }
+        // else if (Vector128.IsHardwareAccelerated)
+        // {
+        //     var firstVector = MemoryMarshal.Cast<ulong, Vector128<ulong>>(first);
+        //     var secondVector = MemoryMarshal.Cast<ulong, Vector128<ulong>>(second);
+        //     for (var i = 0; i < firstVector.Length; i++) 
+        //         firstVector[i] = Vector128.BitwiseAnd(firstVector[i], secondVector[i]);
+            
+            // for (var k = firstVector.Length * 2; k < first.Length; k++) 
+            //     first[k] &= second[k];
+            
+            // uint len = (uint)first.Length;
+            //
+            // ref ulong pFirst = ref MemoryMarshal.GetArrayDataReference(first);
+            // ref ulong pSecond = ref MemoryMarshal.GetArrayDataReference(second);
+            //
+            // for (nuint i = 0; i < len; i += 2)
+            // {
+            //     var v1 = Vector128.LoadUnsafe(ref pFirst, i);
+            //     var v2 = Vector128.LoadUnsafe(ref pSecond, i);
+            //     var result = Vector128.BitwiseAnd(v1, v2);
+            //     result.StoreUnsafe(ref pFirst, i);
+            // }
+        // }
+        // else
         {
             for (var k = 0; k < BitmapLength; k++) 
                 first[k] &= second[k];
