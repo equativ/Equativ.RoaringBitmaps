@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
 
 namespace Equativ.RoaringBitmaps;
@@ -324,10 +325,14 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
             var firstVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(first);
             var secondVector = MemoryMarshal.Cast<ulong, Vector256<ulong>>(second);
             for (var i = 0; i < firstVector.Length; i++) 
-                firstVector[i] = Avx2.And(firstVector[i], secondVector[i]);
-            
-            for (var k = firstVector.Length * 4; k < first.Length; k++) 
-                first[k] &= second[k];
+                firstVector[i] = Vector256.BitwiseAnd(firstVector[i], secondVector[i]);
+        }
+        else if (Vector128.IsHardwareAccelerated)
+        {
+            var firstVector = MemoryMarshal.Cast<ulong, Vector128<ulong>>(first);
+            var secondVector = MemoryMarshal.Cast<ulong, Vector128<ulong>>(second);
+            for (var i = 0; i < firstVector.Length; i++) 
+                firstVector[i] = Vector128.BitwiseAnd(firstVector[i], secondVector[i]);
         }
         else
         {
