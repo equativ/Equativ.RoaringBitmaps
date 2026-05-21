@@ -268,10 +268,8 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
             var shiftedK = k << 6;
             while (bitset != 0)
             {
-                var t = bitset & (~bitset + 1);
-                var result = (ushort) (shiftedK + BitOperations.PopCount(t - 1));
-                list.Add(key | result);
-                bitset ^= t;
+                list.Add(key | (shiftedK + BitOperations.TrailingZeroCount(bitset)));
+                bitset &= bitset - 1;
             }
         }
     }
@@ -285,9 +283,8 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
             var shiftedK = k << 6;
             while (bitset != 0)
             {
-                var t = bitset & (~bitset + 1);
-                data[pos++] = (ushort) (shiftedK + BitOperations.PopCount(t - 1));
-                bitset ^= t;
+                data[pos++] = (ushort)(shiftedK + BitOperations.TrailingZeroCount(bitset));
+                bitset &= bitset - 1;
             }
         }
         return _cardinality;
