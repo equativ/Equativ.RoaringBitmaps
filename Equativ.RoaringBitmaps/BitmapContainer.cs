@@ -192,55 +192,15 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
         return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
     }
 
-    private static int XorInternal(ulong[] first, ulong[] second)
-    {
-        for (var k = 0; k < BitmapLength; k++)
-        {
-            first[k] ^= second[k];
-        }
-        var c = Utils.Popcnt(first);
-        return c;
-    }
+    private static int XorInternal(ulong[] first, ulong[] second) => BitmapOps.FusedBinary<BitmapOps.XorOp>(first, second);
 
-    private static int AndNotInternal(ulong[] first, ulong[] second)
-    {
-        for (var k = 0; k < first.Length; k++)
-        {
-            first[k] &= ~second[k];
-        }
-        var c = Utils.Popcnt(first);
-        return c;
-    }
+    private static int AndNotInternal(ulong[] first, ulong[] second) => BitmapOps.FusedBinary<BitmapOps.AndNotOp>(first, second);
 
-    private static int NotInternal(ulong[] data)
-    {
-        for (var k = 0; k < BitmapLength; k++)
-        {
-            data[k] = ~data[k];
-        }
-        var c = Utils.Popcnt(data);
-        return c;
-    }
+    private static int NotInternal(ulong[] data) => BitmapOps.FusedNot(data);
 
-    private static int OrInternal(ulong[] first, ulong[] second)
-    {
-        for (var k = 0; k < BitmapLength; k++)
-        {
-            first[k] |= second[k];
-        }
-        var c = Utils.Popcnt(first);
-        return c;
-    }
+    private static int OrInternal(ulong[] first, ulong[] second) => BitmapOps.FusedBinary<BitmapOps.OrOp>(first, second);
 
-    private static int AndInternal(ulong[] first, ulong[] second)
-    {
-        for (var k = 0; k < BitmapLength; k++)
-        {
-            first[k] &= second[k];
-        }
-        var c = Utils.Popcnt(first);
-        return c;
-    }
+    private static int AndInternal(ulong[] first, ulong[] second) => BitmapOps.FusedBinary<BitmapOps.AndOp>(first, second);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Contains(ushort x)
