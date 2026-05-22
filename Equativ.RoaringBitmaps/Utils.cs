@@ -163,69 +163,7 @@ internal static class Utils
         {
             return OneSidedGallopingIntersect2By2(set2, set1, buffer);
         }
-        return LocalIntersect2By2(set1, set2, buffer);
-    }
-
-    private static int LocalIntersect2By2(ReadOnlySpan<ushort> set1, ReadOnlySpan<ushort> set2, ushort[] buffer)
-    {
-        if (0 == set1.Length || 0 == set2.Length)
-        {
-            return 0;
-        }
-        var k1 = 0;
-        var k2 = 0;
-        var pos = 0;
-        var s1 = set1[k1];
-        var s2 = set2[k2];
-
-        while (true)
-        {
-            int v1 = s1;
-            int v2 = s2;
-            if (v2 < v1)
-            {
-                do
-                {
-                    ++k2;
-                    if (k2 == set2.Length)
-                    {
-                        return pos;
-                    }
-                    s2 = set2[k2];
-                    v2 = s2;
-                } while (v2 < v1);
-            }
-            if (v1 < v2)
-            {
-                do
-                {
-                    ++k1;
-                    if (k1 == set1.Length)
-                    {
-                        return pos;
-                    }
-                    s1 = set1[k1];
-                    v1 = s1;
-                } while (v1 < v2);
-            }
-            else // (set2[k2] == set1[k1])
-            {
-                buffer[pos++] = s1;
-                ++k1;
-                if (k1 == set1.Length)
-                {
-                    break;
-                }
-                ++k2;
-                if (k2 == set2.Length)
-                {
-                    break;
-                }
-                s1 = set1[k1];
-                s2 = set2[k2];
-            }
-        }
-        return pos;
+        return IntersectSimd.Intersect(set1, set2, buffer);
     }
 
     private static int OneSidedGallopingIntersect2By2(ReadOnlySpan<ushort> smallSet, ReadOnlySpan<ushort> largeSet, ushort[] buffer)
