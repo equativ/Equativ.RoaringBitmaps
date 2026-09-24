@@ -26,6 +26,16 @@ var and = a & b;
 int[] result = and.ToArray(); // [4, 5]
 ```
 
+The operators leave their operands untouched and allocate a new bitmap. When that is not needed, the in-place variants modify the bitmap itself and avoid most allocations, e.g. to fold many bitmaps into one:
+```csharp
+var acc = RoaringBitmap.Create();
+foreach (var bitmap in bitmaps)
+{
+    acc.OrInPlace(bitmap); // also AndInPlace, XorInPlace, AndNotInPlace and NotInPlace
+}
+```
+Bitmaps may share storage behind the scenes (copy on write), so an in-place operation never affects another bitmap, and `Clone()` gives a cheap copy that can be modified independently.
+
 ## Performance
 
 Here are some performance benchmarks. Make sure to run the benchmarks on your own hardware and in your own context/environment to get more meaningful results.  
