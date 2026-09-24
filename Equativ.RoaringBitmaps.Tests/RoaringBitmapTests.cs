@@ -552,6 +552,18 @@ public class RoaringBitmapTests
     }
     
     [Fact]
+    public void XorLargeDisjointArrayContainers_SerializeDeserialize()
+    {
+        var rb = RoaringBitmap.Create(Enumerable.Range(0, 3000));
+        var rb2 = RoaringBitmap.Create(Enumerable.Range(3000, 3000));
+        var rb3 = rb ^ rb2;
+        using var ms = new MemoryStream();
+        RoaringBitmap.Serialize(rb3, ms);
+        ms.Position = 0;
+        Assert.Equal(rb3, RoaringBitmap.Deserialize(ms));
+    }
+
+    [Fact]
     public void XorPartiallyArrayContainer()
     {
         var rb = RoaringBitmap.Create(Enumerable.Range(1000, 200));

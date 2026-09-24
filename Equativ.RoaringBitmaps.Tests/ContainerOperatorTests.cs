@@ -47,6 +47,30 @@ public class ContainerOperatorTests
     }
 
     [Fact]
+    public void Xor_LargeDisjointArrayContainers_ProducesBitmapContainer()
+    {
+        var a = ArrayContainer.Create(Enumerable.Range(0, 3000).Select(i => (ushort) i).ToArray());
+        var b = ArrayContainer.Create(Enumerable.Range(3000, 3000).Select(i => (ushort) i).ToArray());
+
+        Container result = a ^ b;
+
+        Assert.Equal(6000, result.Cardinality);
+        Assert.IsType<BitmapContainer>(result);
+    }
+
+    [Fact]
+    public void Xor_LargeOverlappingArrayContainers_ProducesArrayContainer()
+    {
+        var a = ArrayContainer.Create(Enumerable.Range(0, 3000).Select(i => (ushort) i).ToArray());
+        var b = ArrayContainer.Create(Enumerable.Range(100, 3000).Select(i => (ushort) i).ToArray());
+
+        Container result = a ^ b;
+
+        Assert.Equal(200, result.Cardinality);
+        Assert.IsType<ArrayContainer>(result);
+    }
+
+    [Fact]
     public void AndNot_MixedContainers()
     {
         Container a = ArrayContainer.Create(new ushort[] {8, 9, 10});
