@@ -27,10 +27,62 @@ internal static class Utils
         return Popcnt64.Popcnt(longs);
     }
     
+    /// <summary>
+    /// Input and output may be the same array with overlapping ranges (Array.Copy behaves like memmove)
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ArrayCopy(ushort[] input, int iStart, ushort[] output, int oStart, int length)
     {
-        Buffer.BlockCopy(input, iStart * sizeof(ushort), output, oStart * sizeof(ushort), length * sizeof(ushort));
+        Array.Copy(input, iStart, output, oStart, length);
+    }
+
+    /// <summary>
+    /// Merges set2 into set1 in place, as a union (xor = false) or a symmetric difference (xor = true).
+    /// set1 must have room for length1 + length2 values. Returns the resulting length.
+    /// </summary>
+    public static int MergeArraysInPlace(ushort[] set1, int length1, ushort[] set2, int length2, bool xor)
+    {
+        // Merging from the back never overwrites an unread value of set1: the write index k stays strictly
+        // ahead of the read index i as long as values of set2 remain to be merged.
+        var i = length1 - 1;
+        var j = length2 - 1;
+        var k = length1 + length2 - 1;
+        while (i >= 0 && j >= 0)
+        {
+            var s1 = set1[i];
+            var s2 = set2[j];
+            if (s1 > s2)
+            {
+                set1[k--] = s1;
+                i--;
+            }
+            else if (s1 < s2)
+            {
+                set1[k--] = s2;
+                j--;
+            }
+            else
+            {
+                if (!xor)
+                {
+                    set1[k--] = s1;
+                }
+                i--;
+                j--;
+            }
+        }
+        while (j >= 0)
+        {
+            set1[k--] = set2[j--];
+        }
+        // set1[0..i] is already in place. The merged tail sits at [k + 1, length1 + length2) and is moved down
+        // to close the gap left by duplicates (or by xor cancellations).
+        var tailLength = length1 + length2 - 1 - k;
+        if (k > i)
+        {
+            ArrayCopy(set1, k + 1, set1, i + 1, tailLength);
+        }
+        return i + 1 + tailLength;
     }
 
     public static int UnionArrays(ushort[] set1, int length1, ushort[] set2, int length2, ushort[] buffer)

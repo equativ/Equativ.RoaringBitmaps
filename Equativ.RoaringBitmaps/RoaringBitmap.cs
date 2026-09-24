@@ -6,6 +6,14 @@ using System.Linq;
 
 namespace Equativ.RoaringBitmaps;
 
+/// <summary>
+/// A compressed bitmap of 32-bit integers.
+/// The operators (|, &amp;, ^, ~) and <see cref="AndNot"/> leave their operands untouched and return a new bitmap.
+/// The *InPlace methods modify this bitmap instead, which avoids most of the allocations. Bitmaps may share
+/// storage behind the scenes (copy on write), so modifying one bitmap in place never affects another one.
+/// A bitmap can be read from several threads at once, but an in-place operation must not run concurrently
+/// with any other access to the same bitmap.
+/// </summary>
 public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
 {
     private readonly RoaringArray _highLowContainer;
@@ -63,7 +71,7 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     }
 
     /// <summary>
-    /// Creates a new immutable RoaringBitmap from an existing list of integers
+    /// Creates a new RoaringBitmap from an existing list of integers
     /// </summary>
     /// <param name="values">List of integers</param>
     /// <returns>RoaringBitmap</returns>
@@ -82,7 +90,17 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     }
 
     /// <summary>
-    /// Creates a new immutable RoaringBitmap from an existing list of integers
+    /// Creates a copy of this bitmap that can be modified in place independently of the original.
+    /// This is cheap: the storage is shared until one side modifies it.
+    /// </summary>
+    /// <returns>RoaringBitmap</returns>
+    public RoaringBitmap Clone()
+    {
+        return new RoaringBitmap(_highLowContainer.Clone());
+    }
+
+    /// <summary>
+    /// Creates a new RoaringBitmap from an existing list of integers
     /// </summary>
     /// <param name="values">List of integers</param>
     /// <returns>RoaringBitmap</returns>
@@ -188,6 +206,54 @@ public class RoaringBitmap : IEnumerable<int>, IEquatable<RoaringBitmap>
     public static RoaringBitmap AndNot(RoaringBitmap x, RoaringBitmap y)
     {
         return new RoaringBitmap(RoaringArray.AndNot(x._highLowContainer, y._highLowContainer));
+    }
+
+    /// <summary>
+    /// Bitwise Or with another RoaringBitmap, performed in place: this bitmap becomes this | other
+    /// </summary>
+    /// <param name="other">RoaringBitmap, left untouched</param>
+    public void OrInPlace(RoaringBitmap other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        _highLowContainer.OrInPlace(other._highLowContainer);
+    }
+
+    /// <summary>
+    /// Bitwise And with another RoaringBitmap, performed in place: this bitmap becomes this &amp; other
+    /// </summary>
+    /// <param name="other">RoaringBitmap, left untouched</param>
+    public void AndInPlace(RoaringBitmap other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        _highLowContainer.AndInPlace(other._highLowContainer);
+    }
+
+    /// <summary>
+    /// Bitwise Xor with another RoaringBitmap, performed in place: this bitmap becomes this ^ other
+    /// </summary>
+    /// <param name="other">RoaringBitmap, left untouched</param>
+    public void XorInPlace(RoaringBitmap other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        _highLowContainer.XorInPlace(other._highLowContainer);
+    }
+
+    /// <summary>
+    /// Bitwise AndNot with another RoaringBitmap, performed in place: this bitmap becomes AndNot(this, other)
+    /// </summary>
+    /// <param name="other">RoaringBitmap, left untouched</param>
+    public void AndNotInPlace(RoaringBitmap other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        _highLowContainer.AndNotInPlace(other._highLowContainer);
+    }
+
+    /// <summary>
+    /// Bitwise Not, performed in place: this bitmap becomes ~this
+    /// </summary>
+    public void NotInPlace()
+    {
+        _highLowContainer.NotInPlace();
     }
 
     /// <summary>
