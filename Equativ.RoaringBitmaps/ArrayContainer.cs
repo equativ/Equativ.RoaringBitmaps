@@ -139,14 +139,10 @@ internal class ArrayContainer : Container, IEquatable<ArrayContainer>
         var totalCardinality = x._cardinality + y._cardinality;
         if (totalCardinality > MaxSize)
         {
-            var bc = BitmapContainer.CreateXor(x._content, x.Cardinality, y._content, y.Cardinality);
-            if (bc.Cardinality <= MaxSize)
-            {
-                Create(bc);
-            }
+            var bc = BitmapContainer.CreateXor(x._content, x._cardinality, y._content, y._cardinality);
+            return bc.Cardinality <= MaxSize ? Create(bc) : bc;
         }
-        var desiredCapacity = totalCardinality;
-        var data = new ushort[desiredCapacity];
+        var data = new ushort[totalCardinality];
         var calculatedCardinality = Utils.XorArrays(x._content, x._cardinality, y._content, y._cardinality, data);
         return new ArrayContainer(calculatedCardinality, data);
     }
