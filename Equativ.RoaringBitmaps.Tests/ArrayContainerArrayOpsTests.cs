@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace Equativ.RoaringBitmaps.Tests;
@@ -83,6 +84,46 @@ public class ArrayContainerArrayOpsTests
         Assert.Equal(0, delta);
         Assert.False(BitSet(bitmap, 3));
         Assert.False(BitSet(bitmap, 30));
+    }
+
+    [Theory]
+    [InlineData(new ushort[] {1, 3, 5}, new ushort[] {2, 3, 4}, false, new ushort[] {1, 2, 3, 4, 5})]
+    [InlineData(new ushort[] {1, 3, 5}, new ushort[] {2, 3, 4}, true, new ushort[] {1, 2, 4, 5})]
+    [InlineData(new ushort[] {1, 2, 3}, new ushort[] {1, 2, 3}, false, new ushort[] {1, 2, 3})]
+    [InlineData(new ushort[] {1, 2, 3}, new ushort[] {1, 2, 3}, true, new ushort[0])]
+    [InlineData(new ushort[] {5, 6}, new ushort[] {1, 2, 3}, false, new ushort[] {1, 2, 3, 5, 6})]
+    [InlineData(new ushort[] {1, 2}, new ushort[] {5, 6, 7}, true, new ushort[] {1, 2, 5, 6, 7})]
+    [InlineData(new ushort[0], new ushort[] {1, 2}, false, new ushort[] {1, 2})]
+    [InlineData(new ushort[] {1, 2}, new ushort[0], true, new ushort[] {1, 2})]
+    public void MergeArraysInPlace(ushort[] set1, ushort[] set2, bool xor, ushort[] expected)
+    {
+        var buffer = new ushort[set1.Length + set2.Length];
+        set1.CopyTo(buffer, 0);
+
+        var length = Utils.MergeArraysInPlace(buffer, set1.Length, set2, set2.Length, xor);
+
+        Assert.Equal(expected, buffer.Take(length).ToArray());
+    }
+
+    [Fact]
+    public void MergeArraysInPlace_Random_MatchesLinq()
+    {
+        var random = new Random(42);
+        for (var iteration = 0; iteration < 500; iteration++)
+        {
+            var set1 = Enumerable.Range(0, random.Next(0, 300)).Select(_ => (ushort) random.Next(0, 400)).Distinct().Order().ToArray();
+            var set2 = Enumerable.Range(0, random.Next(0, 300)).Select(_ => (ushort) random.Next(0, 400)).Distinct().Order().ToArray();
+            var union = new ushort[set1.Length + set2.Length];
+            var xor = new ushort[set1.Length + set2.Length];
+            set1.CopyTo(union, 0);
+            set1.CopyTo(xor, 0);
+
+            var unionLength = Utils.MergeArraysInPlace(union, set1.Length, set2, set2.Length, false);
+            var xorLength = Utils.MergeArraysInPlace(xor, set1.Length, set2, set2.Length, true);
+
+            Assert.Equal(set1.Union(set2).Order(), union.Take(unionLength));
+            Assert.Equal(set1.Except(set2).Union(set2.Except(set1)).Order(), xor.Take(xorLength));
+        }
     }
 
     [Fact]

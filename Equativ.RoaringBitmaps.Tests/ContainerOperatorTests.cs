@@ -80,4 +80,30 @@ public class ContainerOperatorTests
 
         Assert.Equal(new[] {8,10}, ToList(result));
     }
+
+    [Fact]
+    public void OrInPlace_UnsharedContainers_AreUpdatedInPlace()
+    {
+        Container array = ArrayContainer.Create(new ushort[] {1, 3});
+        Container bitmap = BitmapContainer.Create(Enumerable.Range(0, 5000).Select(i => (ushort) i).ToArray());
+
+        Assert.Same(array, Container.OrInPlace(array, ArrayContainer.Create(new ushort[] {2, 3, 4})));
+        Assert.Same(bitmap, Container.OrInPlace(bitmap, ArrayContainer.Create(new ushort[] {5000})));
+        Assert.Same(bitmap, Container.OrInPlace(bitmap, BitmapContainer.Create(Enumerable.Range(5000, 5000).Select(i => (ushort) i).ToArray())));
+
+        Assert.Equal(new[] {1, 2, 3, 4}, ToList(array));
+        Assert.Equal(Enumerable.Range(0, 10000), ToList(bitmap));
+    }
+
+    [Fact]
+    public void OrInPlace_SharedContainer_IsLeftUntouched()
+    {
+        Container a = ArrayContainer.Create(new ushort[] {1, 3}).MarkShared();
+
+        Container result = Container.OrInPlace(a, ArrayContainer.Create(new ushort[] {2}));
+
+        Assert.NotSame(a, result);
+        Assert.Equal(new[] {1, 3}, ToList(a));
+        Assert.Equal(new[] {1, 2, 3}, ToList(result));
+    }
 }

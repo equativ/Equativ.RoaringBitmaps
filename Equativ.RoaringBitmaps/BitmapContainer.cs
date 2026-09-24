@@ -11,7 +11,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     private const int BitmapLength = 1024;
     public static readonly BitmapContainer One;
     private readonly ulong[] _bitmap;
-    private readonly int _cardinality;
+    private int _cardinality;
 
     static BitmapContainer()
     {
@@ -21,6 +21,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
             data[i] = ulong.MaxValue;
         }
         One = new BitmapContainer(1 << 16, data);
+        One.MarkShared();
     }
 
     private BitmapContainer(int cardinality)
@@ -125,8 +126,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     public static Container operator &(BitmapContainer x, BitmapContainer y)
     {
         var data = Clone(x._bitmap);
-        var bc = new BitmapContainer(AndInternal(data, y._bitmap), data);
-        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
+        return new BitmapContainer(AndInternal(data, y._bitmap), data).ArrayIfSmall();
     }
 
     private static ulong[] Clone(ulong[] data)
@@ -156,8 +156,7 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     public static Container operator ~(BitmapContainer x)
     {
         var data = Clone(x._bitmap);
-        var bc = new BitmapContainer(NotInternal(data), data);
-        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
+        return new BitmapContainer(NotInternal(data), data).ArrayIfSmall();
     }
 
     /// <summary>
@@ -167,29 +166,84 @@ internal class BitmapContainer : Container, IEquatable<BitmapContainer>
     public static Container operator ^(BitmapContainer x, BitmapContainer y)
     {
         var data = Clone(x._bitmap);
-        var bc = new BitmapContainer(XorInternal(data, y._bitmap), data);
-        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
+        return new BitmapContainer(XorInternal(data, y._bitmap), data).ArrayIfSmall();
     }
 
     public static Container operator ^(BitmapContainer x, ArrayContainer y)
     {
         var data = Clone(x._bitmap);
-        var bc = new BitmapContainer(x._cardinality + y.XorArray(data), data);
-        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
+        return new BitmapContainer(x._cardinality + y.XorArray(data), data).ArrayIfSmall();
     }
 
     public static Container AndNot(BitmapContainer x, BitmapContainer y)
     {
         var data = Clone(x._bitmap);
-        var bc = new BitmapContainer(AndNotInternal(data, y._bitmap), data);
-        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
+        return new BitmapContainer(AndNotInternal(data, y._bitmap), data).ArrayIfSmall();
     }
 
     public static Container AndNot(BitmapContainer x, ArrayContainer y)
     {
         var data = Clone(x._bitmap);
-        var bc = new BitmapContainer(x._cardinality + y.AndNotArray(data), data);
-        return bc._cardinality <= MaxSize ? ArrayContainer.Create(bc) : bc;
+        return new BitmapContainer(x._cardinality + y.AndNotArray(data), data).ArrayIfSmall();
+    }
+
+    // In-place variants: the bitmap is updated in place, and the result is converted to an array container
+    // when it becomes small enough, like the operators above do.
+
+    internal BitmapContainer OrInPlace(BitmapContainer y)
+    {
+        _cardinality = OrInternal(_bitmap, y._bitmap);
+        return this;
+    }
+
+    internal BitmapContainer OrInPlace(ArrayContainer y)
+    {
+        _cardinality += y.OrArray(_bitmap);
+        return this;
+    }
+
+    internal Container AndInPlace(BitmapContainer y)
+    {
+        _cardinality = AndInternal(_bitmap, y._bitmap);
+        return ArrayIfSmall();
+    }
+
+    internal Container XorInPlace(BitmapContainer y)
+    {
+        _cardinality = XorInternal(_bitmap, y._bitmap);
+        return ArrayIfSmall();
+    }
+
+    internal Container XorInPlace(ArrayContainer y)
+    {
+        _cardinality += y.XorArray(_bitmap);
+        return ArrayIfSmall();
+    }
+
+    internal Container AndNotInPlace(BitmapContainer y)
+    {
+        _cardinality = AndNotInternal(_bitmap, y._bitmap);
+        return ArrayIfSmall();
+    }
+
+    internal Container AndNotInPlace(ArrayContainer y)
+    {
+        _cardinality += y.AndNotArray(_bitmap);
+        return ArrayIfSmall();
+    }
+
+    internal Container NotInPlace()
+    {
+        _cardinality = NotInternal(_bitmap);
+        return ArrayIfSmall();
+    }
+
+    /// <summary>
+    /// A bitmap container must hold more than MaxSize values (serialization relies on it), otherwise convert it
+    /// </summary>
+    private Container ArrayIfSmall()
+    {
+        return _cardinality <= MaxSize ? ArrayContainer.Create(this) : this;
     }
 
     private static int XorInternal(ulong[] first, ulong[] second)

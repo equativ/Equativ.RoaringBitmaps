@@ -201,6 +201,47 @@ public class BenchmarkTests : IClassFixture<BenchmarkTests.BenchmarkTestsFixture
     }
 
     [Theory]
+    [InlineData(Paths.CensusIncome)]
+    [InlineData(Paths.Census1881)]
+    [InlineData(Paths.Dimension003)]
+    [InlineData(Paths.Dimension008)]
+    [InlineData(Paths.Dimension033)]
+    [InlineData(Paths.UsCensus2000)]
+    [InlineData(Paths.WeatherSept85)]
+    [InlineData(Paths.WikileaksNoQuotes)]
+    [InlineData(Paths.CensusIncomeSrt)]
+    [InlineData(Paths.Census1881Srt)]
+    [InlineData(Paths.WeatherSept85Srt)]
+    [InlineData(Paths.WikileaksNoQuotesSrt)]
+    public void InPlaceFoldsMatchOperators(string name)
+    {
+        var bitmaps = _mFixture.GetBitmaps(name);
+        Assert.NotNull(bitmaps);
+        var or = bitmaps.Aggregate((x, y) => x | y);
+        var and = bitmaps.Aggregate((x, y) => x & y);
+        var xor = bitmaps.Aggregate((x, y) => x ^ y);
+        var andNot = bitmaps.Aggregate(RoaringBitmap.AndNot);
+
+        Assert.Equal(or, FoldInPlace(bitmaps, (acc, b) => acc.OrInPlace(b)));
+        Assert.Equal(and, FoldInPlace(bitmaps, (acc, b) => acc.AndInPlace(b)));
+        Assert.Equal(xor, FoldInPlace(bitmaps, (acc, b) => acc.XorInPlace(b)));
+        Assert.Equal(andNot, FoldInPlace(bitmaps, (acc, b) => acc.AndNotInPlace(b)));
+        // the in-place folds must not have modified the bitmaps they read from
+        Assert.Equal(or, bitmaps.Aggregate((x, y) => x | y));
+        Assert.Equal(xor, bitmaps.Aggregate((x, y) => x ^ y));
+    }
+
+    private static RoaringBitmap FoldInPlace(RoaringBitmap[] bitmaps, Action<RoaringBitmap, RoaringBitmap> inPlace)
+    {
+        var acc = bitmaps[0].Clone();
+        for (var k = 1; k < bitmaps.Length; k++)
+        {
+            inPlace(acc, bitmaps[k]);
+        }
+        return acc;
+    }
+
+    [Theory]
     [InlineData(new[] { 0b_0000_0000UL }, 0)]
     [InlineData(new[] { 0b_0000_0001UL }, 1)]
     [InlineData(new[] { 0b_1000_0000UL }, 1)]
