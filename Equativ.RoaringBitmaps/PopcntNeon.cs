@@ -12,46 +12,50 @@ internal static class PopcntNeon
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static ulong Popcnt(ReadOnlySpan<ulong> data)
     {
-        ref Vector128<byte> start = ref Unsafe.As<ulong, Vector128<byte>>(ref MemoryMarshal.GetReference(data));
-        
-        const int VECTOR_SIZE = 2;
-        const int UNROLL_FACTOR = 2;
-        
-        ulong cnt = 0;
-        
-        int numberOfVectors = data.Length / VECTOR_SIZE;
-        int numberOfUnrolledIterations = numberOfVectors / UNROLL_FACTOR * UNROLL_FACTOR;
-        ref var end = ref Unsafe.Add(ref start, numberOfUnrolledIterations);
+        ref Vector128<byte> p = ref Unsafe.As<ulong, Vector128<byte>>(ref MemoryMarshal.GetReference(data));
+        int vectors = data.Length / 2;
 
-        while (Unsafe.IsAddressLessThan(ref start, ref end))
-        {
-            // Don't process more than 31 elements
-            ref var end2 = ref Unsafe.Add(ref start, Math.Min(31, Unsafe.ByteOffset(ref start, ref end) / 16));
-            
-            Vector128<byte> t0 = Vector128<byte>.Zero;
-            Vector128<byte> t1 = Vector128<byte>.Zero;
-            
-            while (Unsafe.IsAddressLessThan(ref start, ref end2)) {
-                t0 = AdvSimd.Add(t0, AdvSimd.PopCount(start));
-                t1 = AdvSimd.Add(t1, AdvSimd.PopCount(Unsafe.Add(ref start, 1)));
-                
-                start = ref Unsafe.Add(ref start, UNROLL_FACTOR);
-            }
+        // Accumulate byte popcounts pairwise-widened into u16 lanes. Per-lane growth is at most
+        // 32 per outer iteration (4 vectors * max 8 bits/byte), so u16 saturation is only a concern
+        // after ~2k iterations - far beyond any realistic call site (BitmapContainer is 128 iters).
+        Vector128<ushort> acc = Vector128<ushort>.Zero;
 
-            Vector128<ulong> sum = AdvSimd.AddPairwiseWidening(AdvSimd.AddPairwiseWidening(AdvSimd.AddPairwiseWidening(t0)));
-            sum = AdvSimd.AddPairwiseWideningAndAdd(sum, AdvSimd.AddPairwiseWidening(AdvSimd.AddPairwiseWidening(t1)));
-            cnt += sum.GetElement(0) + sum.GetElement(1);
-        }
-        
-        int remainingUlongs = data.Length - numberOfUnrolledIterations * VECTOR_SIZE;
-        ReadOnlySpan<ulong> remainingData = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<Vector128<byte>, ulong>(ref start), remainingUlongs);
-        
-        // Handle remaining ulongs
-        for (int j = 0; j < remainingData.Length; j++)
+        int unrolled = vectors & ~3;
+        ref Vector128<byte> unrolledEnd = ref Unsafe.Add(ref p, unrolled);
+
+        while (Unsafe.IsAddressLessThan(ref p, ref unrolledEnd))
         {
-            cnt += (ulong)BitOperations.PopCount(data[j]);
+            Vector128<byte> c0 = AdvSimd.PopCount(p);
+            Vector128<byte> c1 = AdvSimd.PopCount(Unsafe.Add(ref p, 1));
+            Vector128<byte> c2 = AdvSimd.PopCount(Unsafe.Add(ref p, 2));
+            Vector128<byte> c3 = AdvSimd.PopCount(Unsafe.Add(ref p, 3));
+
+            // Sum stays in u8 (max 4 * 8 = 32), then widen-add into u16 lanes.
+            Vector128<byte> sum = AdvSimd.Add(AdvSimd.Add(c0, c1), AdvSimd.Add(c2, c3));
+            acc = AdvSimd.AddPairwiseWideningAndAdd(acc, sum);
+
+            p = ref Unsafe.Add(ref p, 4);
         }
 
-        return cnt;
+        // 1-3 remaining full vectors.
+        ref Vector128<byte> end = ref Unsafe.Add(ref p, vectors - unrolled);
+        while (Unsafe.IsAddressLessThan(ref p, ref end))
+        {
+            acc = AdvSimd.AddPairwiseWideningAndAdd(acc, AdvSimd.PopCount(p));
+            p = ref Unsafe.Add(ref p, 1);
+        }
+
+        // Widen u16 -> u32 before the horizontal sum: a full bitmap has up to 65536 set bits
+        // total, which would overflow a u16 reduction.
+        Vector128<uint> wider = AdvSimd.AddPairwiseWidening(acc);
+        ulong total = Vector128.Sum(wider);
+
+        // Tail ulong when data.Length is odd.
+        if ((data.Length & 1) != 0)
+        {
+            total += (ulong)BitOperations.PopCount(data[data.Length - 1]);
+        }
+
+        return total;
     }
 }
